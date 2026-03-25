@@ -62,29 +62,11 @@ const sites = [
 async function fetchFeed(url) {
   const api = "https://rss-api-xghm.onrender.com/rss?url=";
   const res = await fetch(api + encodeURIComponent(url));
-  const text = await res.text();
+  const json = await res.json(); // ← JSON として読む
 
-  // JSON Feed 判定
-  if (text.trim().startsWith("{")) {
-    try {
-      const json = JSON.parse(text);
-      if (json.items) return { type: "json", data: json };
-    } catch (e) {}
-  }
-
-  // XML / RDF / Atom 判定
-  const xml = new DOMParser().parseFromString(text, "text/xml");
-  if (xml.querySelector("rss, rdf, feed")) {
-    return { type: "xml", data: xml };
-  }
-
-  // HTML 判定
-  if (text.includes("<html")) {
-    return { type: "html", data: text };
-  }
-
-  return null;
+  return { type: "json", data: json };
 }
+
 
 
 // ▼ XML / RDF / Atom
@@ -105,13 +87,14 @@ function parseXmlFeed(xml) {
 }
 
 // ▼ JSON Feed
-function parseJsonFeed(json) {
-  return json.items.slice(0, 10).map(item => ({
+function parseJsonFeed(items) {
+  return items.slice(0, 10).map(item => ({
     title: item.title,
-    link: item.url,
-    date: item.date_published || item.date_modified || null
+    link: item.link,
+    date: item.date
   }));
 }
+
 
 // ▼ HTML（RSS が無いサイト用）
 function parseHtmlFeed(htmlText) {
