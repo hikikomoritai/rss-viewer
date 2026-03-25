@@ -69,6 +69,7 @@ const sites = [
   { name: "【2ch】ニュー速クオリティ", rss: "http://news4vip.livedoor.biz/index.rdf" },
   { name: "カナ速", rss: "http://kanasoku.info/index.rdf" },
   { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.rdf" },
+  { name: "無題のドキュメント", rss: "https://mute-sound-848f.watashigyuudondesu.workers.dev" },
   { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.rdf" },
   { name: "ニッチなPCゲーマーの環境構築Z", rss: "https://www.nichepcgamer.com/feed" },
   { name: "はちま起稿", rss: "http://blog.esuteru.com/index.rdf" },
@@ -82,7 +83,7 @@ const sites = [
   { name: "エルミタージュ秋葉原", rss: "https://www.gdm.or.jp/feed" },
   { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
 ];
-  
+
 // ▼ Cloudflare Workers 経由で取得
 async function fetchViaGAS(url) {
   const api = "https://summer-truth-854e.watashigyuudondesu.workers.dev/?url=";
