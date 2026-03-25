@@ -86,7 +86,8 @@ const sites = [
 
 // ▼ Cloudflare Workers 経由で取得
 async function fetchViaCloudflare(url) {
-  const res = await fetch(url); // ← 直接読む
+  const api = "https://summer-truth-854e.watashigyuudondesu.workers.dev/?url=";
+  const res = await fetch(api + encodeURIComponent(url));
   if (!res.ok) throw new Error("fetch failed");
   return await res.text();
 }
