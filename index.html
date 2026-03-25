@@ -60,7 +60,7 @@ const sites = [
 
 // ▼ 形式判定（XML / JSON / HTML）
 async function fetchFeed(url) {
-  const api = "https://rss-api-xghm.onrender.com/rss?url=" + encodeURIComponent(xmlUrl);
+  const api = "https://rss-api-xghm.onrender.com/rss?url=";
   const res = await fetch(api + encodeURIComponent(url));
   const text = await res.text();
 }
