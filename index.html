@@ -60,13 +60,10 @@ const sites = [
 
 // ▼ API から JSON を取得（あなたの API は常に JSON 配列を返す）
 async function fetchFeed(url) {
-  //const api = "https://rss-api-xghm.onrender.com/rss?url=";
-  const res = await fetch("https://rss-api-xghm.onrender.com/rss?url=" + encodeURIComponent(xmlUrl));
-
-  //const res = await fetch(api + encodeURIComponent(url));
-  return await res.json(); // ← JSON 配列として読む
+  const api = "https://rss-api-xghm.onrender.com/rss?url=";
+  const res = await fetch(api + encodeURIComponent(url));
+  return await res.json();
 }
-
 // ▼ JSON 配列をそのまま使う
 function parseJsonFeed(items) {
   return items.slice(0, 10).map(item => ({
