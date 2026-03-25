@@ -67,14 +67,35 @@ async function fetchFeed(url) {
   return xml;
 }
 
-// ▼ XML をパースして記事を取り出す
 function parseXmlFeed(xml) {
   const items = [...xml.querySelectorAll("item")].slice(0, 10);
-  return items.map(item => ({
-    title: item.querySelector("title")?.textContent ?? "タイトルなし",
-    link: item.querySelector("link")?.textContent ?? "#",
-    date: item.querySelector("pubDate")?.textContent ?? null
-  }));
+
+  return items.map(item => {
+    const title =
+      item.querySelector("title")?.textContent ??
+      "タイトルなし";
+
+    const link =
+      item.querySelector("link")?.textContent ??
+      item.querySelector("guid")?.textContent ??
+      "#";
+
+    // RSS2.0
+    let date =
+      item.querySelector("pubDate")?.textContent;
+
+    // RDF形式
+    if (!date) {
+      date = item.querySelector("dc\\:date")?.textContent;
+    }
+
+    // Happyou FS など独自形式
+    if (!date) {
+      date = item.querySelector("date")?.textContent;
+    }
+
+    return { title, link, date };
+  });
 }
 
 // ▼ サイトごとの処理
