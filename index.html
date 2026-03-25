@@ -63,9 +63,6 @@ async function fetchFeed(url) {
   const api = "https://rss-api-xghm.onrender.com/rss?url=";
   const res = await fetch(api + encodeURIComponent(url));
   const text = await res.text();
-}
-
-
 
   // JSON Feed 判定
   if (text.trim().startsWith("{")) {
@@ -88,6 +85,7 @@ async function fetchFeed(url) {
 
   return null;
 }
+
 
 // ▼ XML / RDF / Atom
 function parseXmlFeed(xml) {
