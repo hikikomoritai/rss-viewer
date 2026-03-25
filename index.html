@@ -76,9 +76,13 @@ const sites = [
   { name: "GIGAGINE", rss: "https://gigazine.net/news/rss_2.0" },
   { name: "Game*Spark", rss: "https://www.gamespark.jp/rss/index.rdf" },
   { name: "北森瓦版", rss: "https://northwood.blog.fc2.com/?xml" },
+  { name: "Mogura VR", rss: "https://www.moguravr.com/feed" },
+  { name: "超・マンガ速報", rss: "https://chomangasokuho.blog.jp/index.rdf" },
+  { name: "あにまんch", rss: "https://animanch.com/feed" },
+  { name: "エルミタージュ秋葉原", rss: "https://www.gdm.or.jp/feed" },
   { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
 ];
-
+  
 // ▼ Cloudflare Workers 経由で取得
 async function fetchViaGAS(url) {
   const api = "https://summer-truth-854e.watashigyuudondesu.workers.dev/?url=";
