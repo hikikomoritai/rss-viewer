@@ -25,20 +25,31 @@ async function loadLatest(site) {
   let xmlText = null;
 
   // ① XML を試す
+try {
+  xmlText = await fetchViaGAS(xmlUrl);
+
+  // livedoor の index.xml は HTML を返すことがあるので厳密チェック
+  const isValidXml =
+    xmlText.includes("<item") ||
+    xmlText.includes("<entry");
+
+  if (!isValidXml) throw new Error("invalid xml");
+
+} catch (e) {
+  // ② RDF を試す
   try {
-    xmlText = await fetchViaGAS(xmlUrl);
-    if (!xmlText.includes("<item") && !xmlText.includes("<entry"))
-      throw new Error("not xml");
-  } catch (e) {
-    // ② RDF を試す
-    try {
-      xmlText = await fetchViaGAS(rdfUrl);
-      if (!xmlText.includes("<item") && !xmlText.includes("<rdf:li"))
-        throw new Error("not rdf");
-    } catch (e2) {
-      return `<div class="site"><h2>${site.name}</h2>最新記事を取得できませんでした。</div>`;
-    }
+    xmlText = await fetchViaGAS(rdfUrl);
+
+    const isValidRdf =
+      xmlText.includes("<item") ||
+      xmlText.includes("<rdf:li");
+
+    if (!isValidRdf) throw new Error("invalid rdf");
+
+  } catch (e2) {
+    return `<div class="site"><h2>${site.name}</h2>最新記事を取得できませんでした。</div>`;
   }
+}
 
   // ▼ XML パース
   const xml = new DOMParser().parseFromString(xmlText, "text/xml");
