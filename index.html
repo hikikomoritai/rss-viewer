@@ -50,12 +50,12 @@ span {
 // ▼ サイト一覧
 const sites = [
   { name: "痛いニュース(ﾉ∀`)", rss: "http://blog.livedoor.jp/dqnplus/index.rdf" },
-  { name: "ニュー速クオリティ", rss: "https://news4vip.livedoor.biz/index.xml" },
-  { name: "カナ速", rss: "http://kanasoku.info/index.xml" },
-  { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.xml" },
-  { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.xml" },
+  { name: "ニュー速クオリティ", rss: "https://news4vip.livedoor.biz/index.rdf" },
+  { name: "カナ速", rss: "http://kanasoku.info/index.rdf" },
+  { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.rdf" },
+  { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.rdf" },
   { name: "Happyou FS", rss: "https://www.happyou.info/fs/gen.php?u=-974488574&p=-1429471147" },
-  { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.xml" }
+  { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
 ];
 
 // ▼ AllOrigins で RSS を取得（XML のまま返る）
@@ -108,6 +108,7 @@ async function main() {
 
 main();
 </script>
+
 
 
 </body>
