@@ -60,8 +60,9 @@ const sites = [
 
 // ▼ 形式判定（XML / JSON / HTML）
 async function fetchFeed(url) {
-  const res = await fetch(url);
-  const text = await res.text();
+  const api = "https://rss-api-xxxxx.onrender.com/rss?url=";
+  const res = await fetch(api + encodeURIComponent(url));
+
 
   // JSON Feed 判定
   if (text.trim().startsWith("{")) {
