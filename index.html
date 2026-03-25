@@ -65,23 +65,28 @@ span {
 <script>
 // ▼ サイト一覧
 const sites = [
+  { name: "GIGAGINE", rss: "https://gigazine.net/news/rss_2.0" },
+  { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" },
+  { name: "ニッチなPCゲーマーの環境構築Z", rss: "https://www.nichepcgamer.com/feed" },
+  { name: "Game*Spark", rss: "https://www.gamespark.jp/rss/index.rdf" },
+  { name: "北森瓦版", rss: "https://northwood.blog.fc2.com/?xml" },
   { name: "痛いニュース(ﾉ∀`)", rss: "https://itainews.com/index.rdf" },
   { name: "【2ch】ニュー速クオリティ", rss: "http://news4vip.livedoor.biz/index.rdf" },
   { name: "カナ速", rss: "http://kanasoku.info/index.rdf" },
   { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.rdf" },
   { name: "無題のドキュメント", rss: "https://mute-sound-848f.watashigyuudondesu.workers.dev/mudaino" },
   { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.rdf" },
-  { name: "ニッチなPCゲーマーの環境構築Z", rss: "https://www.nichepcgamer.com/feed" },
+  { name: "デジタルニューススレッド", rss: "http://digital-thread.com/index.rdf" },
+  { name: "もみあげチャ～シュ～", rss: "https://michaelsan.livedoor.biz/index.rdf" },
+  { name: "BIPブログ", rss: "http://bipblog.com/index.rdf" },
   { name: "はちま起稿", rss: "http://blog.esuteru.com/index.rdf" },
   { name: "オレ的ゲーム速報＠刃", rss: "https://jin115.com/index.rdf" },
-  { name: "GIGAGINE", rss: "https://gigazine.net/news/rss_2.0" },
-  { name: "Game*Spark", rss: "https://www.gamespark.jp/rss/index.rdf" },
-  { name: "北森瓦版", rss: "https://northwood.blog.fc2.com/?xml" },
   { name: "Mogura VR", rss: "https://www.moguravr.com/feed" },
   { name: "超・マンガ速報", rss: "https://chomangasokuho.blog.jp/index.rdf" },
   { name: "あにまんch", rss: "https://animanch.com/feed" },
-  { name: "エルミタージュ秋葉原", rss: "https://www.gdm.or.jp/feed" },
-  { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
+  { name: "ハムスター速報", rss: "https://hamusoku.com/index.rdf" },
+  { name: "アルファルファモザイク＠ネットニュースのまとめ", rss: "https://alfalfalfa.com/index.rdf" },
+  { name: "エルミタージュ秋葉原", rss: "https://www.gdm.or.jp/feed" }
 ];
 
 async function fetchViaCloudflare(url) {
