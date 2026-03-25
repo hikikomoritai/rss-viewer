@@ -76,7 +76,7 @@ const sites = [
 
 // ▼ GAS 経由で取得
 async function fetchViaGAS(url) {
-  const api = "https://script.google.com/macros/s/AKfycbyhSPzOGLtL7Xb2_h-bNGKHxtGTMtUmLaBI8r2ZLj-K8F7b97kg5bwLjV1HvwJiiLc/exec?url=";
+  const api = "https://rss-viewer.watashigyuudondesu.workers.dev?url=";
   const res = await fetch(api + encodeURIComponent(url));
   if (!res.ok) throw new Error("fetch failed");
   return await res.text();
