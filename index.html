@@ -134,11 +134,13 @@ if (items.length === 0) {
     items = items.slice(0, 10).map(item => {
       const title = item.querySelector("title")?.textContent ?? "タイトルなし";
 
-      const link =
-        item.querySelector("link")?.textContent ||
-        item.querySelector("link")?.getAttribute("href") ||
-        item.getAttribute("rdf:about") ||
-        "#";
+const link =
+  item.querySelector("link")?.textContent?.trim() ||
+  item.querySelector("link")?.getAttribute("href") ||
+  item.querySelector("guid")?.textContent?.trim() ||
+  item.getAttribute("rdf:about") ||
+  "#";
+
 
       // ▼ 日付タグを全網羅（RSS2.0 / Atom / RDF）
       const pubDate =
