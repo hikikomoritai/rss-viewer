@@ -60,9 +60,11 @@ const sites = [
 
 // ▼ API から JSON を取得（あなたの API は常に JSON 配列を返す）
 async function fetchFeed(url) {
-const api = "https://api.rss2json.com/v1/api.json?rss_url=";
-const res = await fetch(api + encodeURIComponent(url));
-const json = await res.json();
+  const api = "https://api.rss2json.com/v1/api.json?rss_url=";
+  const res = await fetch(api + encodeURIComponent(url));
+  const json = await res.json();
+  return json.items; // RSS2JSON の形式
+}
 
 }
 // ▼ JSON 配列をそのまま使う
