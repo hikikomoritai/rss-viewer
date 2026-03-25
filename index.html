@@ -123,10 +123,13 @@ async function loadLatest(site) {
         item.querySelector("pubDate")?.textContent ||
         item.querySelector("dc\\:date")?.textContent ||
         item.querySelector("updated")?.textContent ||
+        item.getElementsByTagName("updated")[0]?.textContent ||   // ← Atom namespace対応
         item.querySelector("published")?.textContent ||
+        item.getElementsByTagName("published")[0]?.textContent || // ← Atom namespace対応
         item.querySelector("date")?.textContent ||
         item.querySelector("created")?.textContent ||
         item.querySelector("modified")?.textContent;
+      
 
       return { title, link, date: pubDate };
     });
