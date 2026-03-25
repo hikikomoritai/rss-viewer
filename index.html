@@ -85,7 +85,7 @@ const sites = [
 ];
 
 // ▼ Cloudflare Workers 経由で取得
-async function fetchViaGAS(url) {
+async function fetchViaCloudflare(url) {
   const api = "https://summer-truth-854e.watashigyuudondesu.workers.dev/?url=";
   const res = await fetch(api + encodeURIComponent(url));
   if (!res.ok) throw new Error("fetch failed");
@@ -94,7 +94,9 @@ async function fetchViaGAS(url) {
 
 // ▼ XML/RDF/Atom 自動判定
 async function loadLatest(site) {
-  let xmlText = await fetchViaGAS(site.rss);
+  //let xmlText = await fetchViaCloudflare(site.rss);
+  let xmlText = await fetch(site.rss).then(r => r.text());
+
 
   // RSS が壊れている場合は即終了
   if (!xmlText.includes("<item") &&
