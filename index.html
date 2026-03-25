@@ -84,13 +84,19 @@ const sites = [
   { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
 ];
 
-// ▼ Cloudflare Workers 経由で取得
 async function fetchViaCloudflare(url) {
+  // ★ 無題のドキュメントだけ summer を通さない
+  if (url.includes("mute-sound-848f")) {
+    const res = await fetch(url);
+    return await res.text();
+  }
+
+  // それ以外は今まで通り summer 経由
   const api = "https://summer-truth-854e.watashigyuudondesu.workers.dev/?v=2&url=";
   const res = await fetch(api + encodeURIComponent(url));
-  if (!res.ok) throw new Error("fetch failed");
   return await res.text();
 }
+
 
 
 // ▼ XML/RDF/Atom 自動判定
