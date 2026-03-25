@@ -47,7 +47,6 @@ const sites = [
   { name: "カナ速", rss: "http://kanasoku.info/index.rdf" },
   { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.rdf" },
   { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.rdf" },
-  { name: "Happyou FS", rss: "https://www.happyou.info/fs/gen.php?u=-974488574&p=-1429471147" },
   { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
 ];
 
@@ -116,12 +115,11 @@ async function loadLatest(site) {
 
 // ▼ メイン処理
 async function main() {
-  let html = "";
-  for (const site of sites) {
-    html += await loadLatest(site);
-  }
-  document.getElementById("sites").innerHTML = html;
+  const promises = sites.map(site => loadLatest(site));
+  const results = await Promise.all(promises);
+  document.getElementById("sites").innerHTML = results.join("");
 }
+
 
 main();
 </script>
