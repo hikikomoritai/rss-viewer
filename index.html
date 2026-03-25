@@ -60,12 +60,12 @@ const sites = [
 
 // ▼ RSS2JSON から JSON を取得
 async function fetchFeed(url) {
-  const api = "https://api.rss2json.com/v1/api.json?rss_url=";
+  const api = "https://api.allorigins.win/get?url=";
   const res = await fetch(api + encodeURIComponent(url));
-  if (!res.ok) throw new Error("fetch failed");
   const json = await res.json();
-  return json.items; // RSS2JSON の items 配列
+  return (new window.DOMParser()).parseFromString(json.contents, "text/xml");
 }
+
 
 // ▼ JSON 配列をそのまま使う
 function parseJsonFeed(items) {
