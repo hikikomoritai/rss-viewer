@@ -74,7 +74,7 @@ const sites = [
   { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
 ];
 
-// ▼ GAS 経由で取得
+// ▼ Cloudflare Workers 経由で取得
 async function fetchViaGAS(url) {
   const api = "https://summer-truth-854e.watashigyuudondesu.workers.dev/?url=";
   const res = await fetch(api + encodeURIComponent(url));
@@ -98,17 +98,28 @@ async function loadLatest(site) {
   // ▼ RSS2.0 / Atom / RDF すべて対応
   let items = [...xml.querySelectorAll("item, entry")];
 
-  // RDF の場合
-  if (items.length === 0) {
-    const links = [...xml.getElementsByTagName("rdf:li")].map(li =>
-      li.getAttribute("rdf:resource")
-    );
-    items = links.map(link => ({
-      title: link,
-      link,
-      date: null
-    })).slice(0, 10);
-  } else {
+// RDF の場合
+if (items.length === 0) {
+  const links = [...xml.getElementsByTagName("rdf:li")].map(li =>
+    li.getAttribute("rdf:resource")
+  );
+
+  items = links.map(link => {
+    // RDF の item ノードを探す
+    const itemNode = xml.querySelector(`item[rdf\\:about="${link}"]`);
+
+    const title =
+      itemNode?.querySelector("title")?.textContent ??
+      link;
+
+    const date =
+      itemNode?.querySelector("dc\\:date")?.textContent ||
+      itemNode?.querySelector("date")?.textContent ||
+      null;
+
+    return { title, link, date };
+  }).slice(0, 10);
+} else {
     items = items.slice(0, 10).map(item => {
       const title = item.querySelector("title")?.textContent ?? "タイトルなし";
 
