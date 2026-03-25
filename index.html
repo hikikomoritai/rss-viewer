@@ -25,15 +25,9 @@ h1 {
   color: #80cbc4;
   text-decoration: none;
 }
-.site h2 a:hover {
-  text-decoration: underline;
-}
 li a {
   color: #90caf9;
   text-decoration: none;
-}
-li a:hover {
-  text-decoration: underline;
 }
 span {
   color: #aaaaaa;
@@ -43,7 +37,6 @@ span {
 <body>
 
 <h1>まとめサイト 最新記事一覧（10件）</h1>
-
 <div id="sites"></div>
 
 <script>
@@ -58,41 +51,33 @@ const sites = [
   { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
 ];
 
-// ▼ AllOrigins で RSS を取得（XML のまま返る）
+// ▼ GAS 経由で RSS を取得
 async function fetchFeed(url) {
   const api = "https://script.google.com/macros/s/AKfycbyhSPzOGLtL7Xb2_h-bNGKHxtGTMtUmLaBI8r2ZLj-K8F7b97kg5bwLjV1HvwJiiLc/exec?url=";
   const res = await fetch(api + encodeURIComponent(url));
-  const json = await res.json();
-  const xml = new DOMParser().parseFromString(xmlText, "text/xml");
-  return xml;
+  const xmlText = await res.text();
+  return new DOMParser().parseFromString(xmlText, "text/xml");
 }
 
+// ▼ XML をパース
 function parseXmlFeed(xml) {
   const items = [...xml.querySelectorAll("item")].slice(0, 10);
 
   return items.map(item => {
-    const title =
-      item.querySelector("title")?.textContent ??
-      "タイトルなし";
-
+    const title = item.querySelector("title")?.textContent ?? "タイトルなし";
     const link =
       item.querySelector("link")?.textContent ??
       item.querySelector("guid")?.textContent ??
       "#";
 
     // RSS2.0
-    let date =
-      item.querySelector("pubDate")?.textContent;
+    let date = item.querySelector("pubDate")?.textContent;
 
     // RDF形式
-    if (!date) {
-      date = item.querySelector("dc\\:date")?.textContent;
-    }
+    if (!date) date = item.querySelector("dc\\:date")?.textContent;
 
-    // Happyou FS など独自形式
-    if (!date) {
-      date = item.querySelector("date")?.textContent;
-    }
+    // 独自形式
+    if (!date) date = item.querySelector("date")?.textContent;
 
     return { title, link, date };
   });
@@ -129,8 +114,6 @@ async function main() {
 
 main();
 </script>
-
-
 
 </body>
 </html>
