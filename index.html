@@ -69,7 +69,7 @@ const sites = [
   { name: "【2ch】ニュー速クオリティ", rss: "http://news4vip.livedoor.biz/index.rdf" },
   { name: "カナ速", rss: "http://kanasoku.info/index.rdf" },
   { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.rdf" },
-  { name: "無題のドキュメント", rss: "https://mute-sound-848f.watashigyuudondesu.workers.dev/?site=mudaino" },
+  //{ name: "無題のドキュメント", rss: "https://mute-sound-848f.watashigyuudondesu.workers.dev/?site=mudaino" },
   { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.rdf" },
   { name: "ニッチなPCゲーマーの環境構築Z", rss: "https://www.nichepcgamer.com/feed" },
   { name: "はちま起稿", rss: "http://blog.esuteru.com/index.rdf" },
@@ -94,8 +94,7 @@ async function fetchViaCloudflare(url) {
 
 // ▼ XML/RDF/Atom 自動判定
 async function loadLatest(site) {
-  //let xmlText = await fetchViaCloudflare(site.rss);
-  let xmlText = await fetch(site.rss).then(r => r.text());
+  let xmlText = await fetchViaCloudflare(site.rss);
 
 
   // RSS が壊れている場合は即終了
