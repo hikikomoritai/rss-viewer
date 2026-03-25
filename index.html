@@ -59,21 +59,32 @@ async function fetchFeed(url) {
   return new DOMParser().parseFromString(xmlText, "text/xml");
 }
 
-// ▼ XML をパース
+// ▼ XML をパース（RDF / RSS2.0 / 独自XML 全対応）
 function parseXmlFeed(xml) {
-  const items = [...xml.querySelectorAll("item")].slice(0, 10);
+  let items = [...xml.querySelectorAll("item")];
 
-  return items.map(item => {
+  // RDF の場合 item が無いことがある → rdf:li を使う
+  if (items.length === 0) {
+    const links = [...xml.querySelectorAll("rdf\\:li")].map(li => li.getAttribute("rdf:resource"));
+    items = links.map(link => ({
+      title: link,
+      link: link,
+      date: null
+    }));
+    return items.slice(0, 10);
+  }
+
+  return items.slice(0, 10).map(item => {
     const title = item.querySelector("title")?.textContent ?? "タイトルなし";
     const link =
       item.querySelector("link")?.textContent ??
-      item.querySelector("guid")?.textContent ??
+      item.getAttribute("rdf:about") ??
       "#";
 
     // RSS2.0
     let date = item.querySelector("pubDate")?.textContent;
 
-    // RDF形式
+    // RDF
     if (!date) date = item.querySelector("dc\\:date")?.textContent;
 
     // 独自形式
