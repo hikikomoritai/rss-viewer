@@ -140,7 +140,12 @@ async function loadLatest(site) {
 
   for (const item of items) {
     const dateText = item.date ? new Date(item.date).toLocaleString() : "日付なし";
-    html += `<li><a href="${item.link}" target="_blank">${item.title}</a> <span>（${dateText}）</span></li>`;
+    html += `
+      <li>
+        <a href="${item.link}" target="_blank">${item.title}</a><br>
+        <span class="date">（${dateText}）</span>
+      </li>
+    `;
   }
 
   html += "</ul></div>";
