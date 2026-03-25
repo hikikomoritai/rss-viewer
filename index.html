@@ -47,7 +47,7 @@ span {
 <div id="sites"></div>
 
 <script>
-// ▼ RSS / JSON / HTML を混在で扱うサイト一覧
+// ▼ サイト一覧
 const sites = [
   { name: "痛いニュース(ﾉ∀`)", rss: "https://blog.livedoor.jp/dqnplus/index.rdf" },
   { name: "ニュー速クオリティ", rss: "https://news4vip.livedoor.biz/index.xml" },
@@ -58,35 +58,14 @@ const sites = [
   { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.xml" }
 ];
 
-// ▼ 形式判定（XML / JSON / HTML）
+// ▼ API から JSON を取得（あなたの API は常に JSON 配列を返す）
 async function fetchFeed(url) {
   const api = "https://rss-api-xghm.onrender.com/rss?url=";
   const res = await fetch(api + encodeURIComponent(url));
-  const json = await res.json(); // ← JSON として読む
-
-  return { type: "json", data: json };
+  return await res.json(); // ← JSON 配列として読む
 }
 
-
-
-// ▼ XML / RDF / Atom
-function parseXmlFeed(xml) {
-  const items = [...xml.querySelectorAll("item, entry")];
-  return items.slice(0, 10).map(item => ({
-    title: item.querySelector("title")?.textContent ?? "",
-    link:
-      item.querySelector("link")?.textContent ||
-      item.querySelector("link")?.getAttribute("href"),
-    date:
-      item.querySelector("pubDate")?.textContent ||
-      item.querySelector("dc\\:date")?.textContent ||
-      item.querySelector("updated")?.textContent ||
-      item.querySelector("published")?.textContent ||
-      null
-  }));
-}
-
-// ▼ JSON Feed
+// ▼ JSON 配列をそのまま使う
 function parseJsonFeed(items) {
   return items.slice(0, 10).map(item => ({
     title: item.title,
@@ -95,45 +74,16 @@ function parseJsonFeed(items) {
   }));
 }
 
-
-// ▼ HTML（RSS が無いサイト用）
-function parseHtmlFeed(htmlText) {
-  const doc = new DOMParser().parseFromString(htmlText, "text/html");
-
-  // よくある記事構造に対応
-  const articles = [
-    ...doc.querySelectorAll("article, .post, .entry, li, .news, .topic")
-  ].slice(0, 10);
-
-  return articles.map(a => ({
-    title:
-      a.querySelector("h1, h2, h3, a")?.textContent?.trim() ?? "タイトル不明",
-    link: a.querySelector("a")?.href ?? "#",
-    date:
-      a.querySelector("time")?.getAttribute("datetime") ||
-      a.querySelector("time")?.textContent ||
-      null
-  }));
-}
-
 // ▼ サイトごとの処理
 async function loadLatest(site) {
-  let feed;
+  let items = [];
+
   try {
-    feed = await fetchFeed(site.rss);
+    const json = await fetchFeed(site.rss);
+    items = parseJsonFeed(json);
   } catch (e) {
     return `<div class="site"><h2>${site.name}</h2>取得できませんでした。</div>`;
   }
-
-  if (!feed) {
-    return `<div class="site"><h2>${site.name}</h2>対応していない形式です。</div>`;
-  }
-
-  let items = [];
-
-  if (feed.type === "xml") items = parseXmlFeed(feed.data);
-  else if (feed.type === "json") items = parseJsonFeed(feed.data);
-  else if (feed.type === "html") items = parseHtmlFeed(feed.data);
 
   let html = `<div class="site"><h2><a href="${site.rss}" target="_blank">${site.name}</a></h2><ul>`;
 
