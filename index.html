@@ -1,129 +1,96 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>まとめサイト 最新記事一覧（10件）</title>
-<style>
-body {
-  font-family: sans-serif;
-  margin: 20px;
-  background-color: #121212;
-  color: #e0e0e0;
-}
-h1 {
-  font-size: 24px;
-  color: #ffffff;
-}
-.site {
-  margin-bottom: 30px;
-  background: #1e1e1e;
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid #333;
-}
-.site h2 a {
-  color: #80cbc4;
-  text-decoration: none;
-}
-li a {
-  color: #90caf9;
-  text-decoration: none;
-}
-span {
-  color: #aaaaaa;
-}
-</style>
-</head>
-<body>
-
-<h1>まとめサイト 最新記事一覧（10件）</h1>
-<div id="sites"></div>
-
 <script>
 // ▼ サイト一覧
 const sites = [
-  { name: "痛いニュース(ﾉ∀`)", rss: "http://blog.livedoor.jp/dqnplus/index.rdf" },
-  { name: "ニュー速クオリティ", rss: "https://news4vip.livedoor.biz/index.xml" },
-  { name: "カナ速", rss: "http://kanasoku.info/index.rdf" },
-  { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.rdf" },
-  { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.rdf" },
-  { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
+  { name: "痛いニュース(ﾉ∀`)", rss: "https://itainews.com/index.xml" },
+  { name: "【2ch】ニュー速クオリティ", rss: "http://news4vip.livedoor.biz/index.xml" },
+  { name: "カナ速", rss: "http://kanasoku.info/index.xml" },
+  { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.xml" },
+  { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.xml" },
+  { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.xml" }
 ];
 
-// ▼ GAS 経由で RSS を取得
-async function fetchFeed(url) {
+// ▼ GAS 経由で XML/RDF を取得
+async function fetchViaGAS(url) {
   const api = "https://script.google.com/macros/s/AKfycbyhSPzOGLtL7Xb2_h-bNGKHxtGTMtUmLaBI8r2ZLj-K8F7b97kg5bwLjV1HvwJiiLc/exec?url=";
   const res = await fetch(api + encodeURIComponent(url));
-  const xmlText = await res.text();
-  return new DOMParser().parseFromString(xmlText, "text/xml");
+  if (!res.ok) throw new Error("fetch failed");
+  return await res.text();
 }
 
-// ▼ XML をパース（RDF / RSS2.0 / 独自XML 全対応）
-function parseXmlFeed(xml) {
-  let items = [...xml.querySelectorAll("item")];
+// ▼ XML → RDF 自動フォールバック
+async function loadLatest(site) {
+  const xmlUrl = site.rss.replace(/index\.rdf$/, "index.xml");
+  const rdfUrl = site.rss.replace(/index\.xml$/, "index.rdf");
 
-  // RDF の場合 item が無いことがある → rdf:li を使う
+  let xmlText = null;
+
+  // ① XML を試す
+  try {
+    xmlText = await fetchViaGAS(xmlUrl);
+    if (!xmlText.includes("<item") && !xmlText.includes("<entry"))
+      throw new Error("not xml");
+  } catch (e) {
+    // ② RDF を試す
+    try {
+      xmlText = await fetchViaGAS(rdfUrl);
+      if (!xmlText.includes("<item") && !xmlText.includes("<rdf:li"))
+        throw new Error("not rdf");
+    } catch (e2) {
+      return `<div class="site"><h2>${site.name}</h2>最新記事を取得できませんでした。</div>`;
+    }
+  }
+
+  // ▼ XML パース
+  const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+
+  // ▼ RSS2.0 / Atom / RDF すべて対応
+  let items = [...xml.querySelectorAll("item, entry")];
+
+  // RDF の場合 item が無い → rdf:li を使う
   if (items.length === 0) {
     const links = [...xml.querySelectorAll("rdf\\:li")].map(li => li.getAttribute("rdf:resource"));
-    items = links.map(link => ({
-      title: link,
-      link: link,
-      date: null
-    }));
-    return items.slice(0, 10);
+    items = links.map(link => ({ title: link, link, date: null }));
+    items = items.slice(0, 10);
+  } else {
+    items = items.slice(0, 10).map(item => {
+      const title = item.querySelector("title")?.textContent ?? "タイトルなし";
+      const link =
+        item.querySelector("link")?.textContent ??
+        item.querySelector("link")?.getAttribute("href") ??
+        item.getAttribute("rdf:about") ??
+        "#";
+
+      const pubDate =
+        item.querySelector("pubDate")?.textContent ||
+        item.querySelector("dc\\:date")?.textContent ||
+        item.querySelector("date")?.textContent ||
+        item.querySelector("created")?.textContent ||
+        item.querySelector("modified")?.textContent ||
+        item.querySelector("updated")?.textContent ||
+        item.querySelector("published")?.textContent;
+
+      return { title, link, date: pubDate };
+    });
   }
 
-  return items.slice(0, 10).map(item => {
-    const title = item.querySelector("title")?.textContent ?? "タイトルなし";
-    const link =
-      item.querySelector("link")?.textContent ??
-      item.getAttribute("rdf:about") ??
-      "#";
+  // ▼ HTML 出力
+  const siteUrl = site.rss.replace(/\/[^/]*$/, "");
+  let html = `<div class="site"><h2><a href="${siteUrl}" target="_blank">${site.name}</a></h2><ul>`;
 
-    // RSS2.0
-    let date = item.querySelector("pubDate")?.textContent;
-
-    // RDF
-    if (!date) date = item.querySelector("dc\\:date")?.textContent;
-
-    // 独自形式
-    if (!date) date = item.querySelector("date")?.textContent;
-
-    return { title, link, date };
-  });
-}
-
-// ▼ サイトごとの処理
-async function loadLatest(site) {
-  try {
-    const xml = await fetchFeed(site.rss);
-    const items = parseXmlFeed(xml);
-
-    let html = `<div class="site"><h2><a href="${site.rss}" target="_blank">${site.name}</a></h2><ul>`;
-    for (const item of items) {
-      const dateText = item.date ? new Date(item.date).toLocaleString() : "日付なし";
-      html += `<li><a href="${item.link}" target="_blank">${item.title}</a> <span>（${dateText}）</span></li>`;
-    }
-    html += "</ul></div>";
-    return html;
-
-  } catch (e) {
-    console.error(site.name, e);
-    return `<div class="site"><h2>${site.name}</h2>取得できませんでした。</div>`;
+  for (const item of items) {
+    const dateText = item.date ? new Date(item.date).toLocaleString() : "日付なし";
+    html += `<li><a href="${item.link}" target="_blank">${item.title}</a> <span>（${dateText}）</span></li>`;
   }
+
+  html += "</ul></div>";
+  return html;
 }
 
-// ▼ メイン処理
+// ▼ 高速化：全サイトを並列で取得
 async function main() {
-  const promises = sites.map(site => loadLatest(site));
-  const results = await Promise.all(promises);
+  const results = await Promise.all(sites.map(loadLatest));
   document.getElementById("sites").innerHTML = results.join("");
 }
 
-
-
 main();
 </script>
-
-</body>
-</html>
