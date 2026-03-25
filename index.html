@@ -60,7 +60,7 @@ const sites = [
 
 // ▼ AllOrigins で RSS を取得（XML のまま返る）
 async function fetchFeed(url) {
-  const api = "https://api.allorigins.win/get?url=";
+  const api = "https://script.google.com/macros/s/AKfycbyhSPzOGLtL7Xb2_h-bNGKHxtGTMtUmLaBI8r2ZLj-K8F7b97kg5bwLjV1HvwJiiLc/exec?url=";
   const res = await fetch(api + encodeURIComponent(url));
   const json = await res.json();
   const xml = new DOMParser().parseFromString(json.contents, "text/xml");
