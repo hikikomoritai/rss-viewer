@@ -1,3 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>まとめサイト 最新記事一覧（10件）</title>
+<style>
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  background-color: #121212;   /* 背景を黒に近いグレー */
+  color: #e0e0e0;              /* 文字色を明るいグレー */
+}
+
+h1 {
+  font-size: 24px;
+  color: #ffffff;              /* 見出しは白 */
+}
+
+.site {
+  margin-bottom: 30px;
+  background: #1e1e1e;         /* 各サイト枠の背景 */
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #333;      /* 薄い枠線 */
+}
+
+.site h2 {
+  margin-bottom: 5px;
+}
+
+.site h2 a {
+  color: #80cbc4;              /* サイト名リンクの色（青緑） */
+  text-decoration: none;
+}
+
+.site h2 a:hover {
+  text-decoration: underline;
+}
+
+ul {
+  margin-top: 5px;
+}
+
+li a {
+  color: #90caf9;              /* 記事リンクの色（淡い青） */
+  text-decoration: none;
+}
+
+li a:hover {
+  text-decoration: underline;
+}
+
+span {
+  color: #aaaaaa;              /* 日付の色 */
+}
+
+</style>
+</head>
+<body>
+
+<h1>まとめサイト 最新記事一覧（10件）</h1>
+
+<div id="sites"></div>
+
 <script>
 // ▼ サイト一覧
 const sites = [
@@ -105,3 +169,5 @@ async function main() {
 
 main();
 </script>
+</body>
+</html>
