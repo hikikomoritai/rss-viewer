@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>まとめサイト 最新記事一覧（10件）</title>
+<style>
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  background-color: #121212;   /* 背景を黒に近いグレー */
+  color: #e0e0e0;              /* 文字色を明るいグレー */
+}
+
+h1 {
+  font-size: 24px;
+  color: #ffffff;              /* 見出しは白 */
+}
+
+.site {
+  margin-bottom: 30px;
+  background: #1e1e1e;         /* 各サイト枠の背景 */
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #333;      /* 薄い枠線 */
+}
+
+.site h2 {
+  margin-bottom: 5px;
+}
+
+.site h2 a {
+  color: #80cbc4;              /* サイト名リンクの色（青緑） */
+  text-decoration: none;
+}
+
+.site h2 a:hover {
+  text-decoration: underline;
+}
+
+ul {
+  margin-top: 5px;
+}
+
+li a {
+  color: #90caf9;              /* 記事リンクの色（淡い青） */
+  text-decoration: none;
+}
+
+li a:hover {
+  text-decoration: underline;
+}
+
+span {
+  color: #aaaaaa;              /* 日付の色 */
+}
+
+</style>
+</head>
+<body>
+
+<h1>まとめサイト 最新記事一覧（10件）</h1>
+
+<div id="sites"></div>
+
+<script>
+// ▼ ここにサイト名とRSSを追加するだけ ▼
+const sites = [
+  { name: "痛いニュース(ﾉ∀`)", rss: "https://itainews.com/index.xml" },
+  { name: "【2ch】ニュー速クオリティ", rss: "http://news4vip.livedoor.biz/index.xml" },
+  { name: "カナ速", rss: "http://kanasoku.info/index.xml" },
+  { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.xml" },
+  { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.xml" },
+  //{ name: "tttt", rss: "https://www.happyou.info/fs/gen.php?u=-974488574&p=-1429471147" },
+  { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.xml" }
+];
+
+async function loadLatest(site) {
+  // xml と rdf の両方を用意
+  const xmlUrl = site.rss.replace(/index\.rdf$/, "index.xml");
+  const rdfUrl = site.rss.replace(/index\.xml$/, "index.rdf");
+
+  let xmlText = null;
+  let type = "xml";
+
+  // ▼ まず xml を試す
+  try {
+    const res = await fetch(xmlUrl);
+    if (!res.ok) throw new Error();
+    xmlText = await res.text();
+  } catch (e) {
+    // ▼ xml がダメなら rdf にフォールバック
+    try {
+      const res = await fetch(rdfUrl);
+      if (!res.ok) throw new Error();
+      xmlText = await res.text();
+      type = "rdf";
+    } catch (e2) {
+      return `<div class="site"><h2>${site.name}</h2>最新記事を取得できませんでした。</div>`;
+    }
+  }
+
+  // ▼ XML をパース
+  const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+
+  // Atom(xml) は entry、RDF(rdf) は item
+  const items = [...xml.querySelectorAll("item, entry")].slice(0, 10);
+
+  // ▼ サイト名リンク
+  let siteUrl = site.rss.replace(/\/[^/]*$/, "");
+  let html = `<div class="site"><h2><a href="${siteUrl}" target="_blank">${site.name}</a></h2><ul>`;
+
+  for (const item of items) {
+    const title =
+      item.querySelector("title")?.textContent ||
+      item.querySelector("title")?.innerHTML;
+
+    const link =
+      item.querySelector("link")?.textContent ||
+      item.querySelector("link")?.getAttribute("href");
+
+    // ▼ 日付（xml と rdf でタグが違う）
+const pubDate =
+  item.querySelector("pubDate")?.textContent ||
+  item.querySelector("dc\\:date")?.textContent ||
+  item.querySelector("date")?.textContent ||          // ← 追加
+  item.querySelector("created")?.textContent ||       // ← 追加
+  item.querySelector("modified")?.textContent ||      // ← 追加
+  item.querySelector("updated")?.textContent ||
+  item.querySelector("published")?.textContent;
+
+
+    const dateText = pubDate
+      ? new Date(pubDate).toLocaleString()
+      : "日付なし";
+
+    html += `<li>
+      <a href="${link}" target="_blank">${title}</a>
+      <span class="date">（${dateText}）</span>
+    </li>`;
+  }
+
+  html += "</ul></div>";
+  return html;
+}
+
+async function main() {
+  let html = "";
+  for (const site of sites) {
+    html += await loadLatest(site);
+  }
+  document.getElementById("sites").innerHTML = html;
+}
+
+main();
+</script>
+
+</body>
+</html>
