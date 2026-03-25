@@ -49,54 +49,52 @@ span {
 <script>
 // ▼ サイト一覧
 const sites = [
-  { name: "痛いニュース(ﾉ∀`)", rss: "https://itainews.com/index.xml" },
-  { name: "ニュー速クオリティ", rss: "https://news4vip.livedoor.biz/index.rdf" },
-  { name: "カナ速", rss: "http://kanasoku.info/index.rdf" },
-  { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.rdf" },
-  { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.rdf" },
+  { name: "痛いニュース(ﾉ∀`)", rss: "http://blog.livedoor.jp/dqnplus/index.rdf" },
+  { name: "ニュー速クオリティ", rss: "https://news4vip.livedoor.biz/index.xml" },
+  { name: "カナ速", rss: "http://kanasoku.info/index.xml" },
+  { name: "VIPPERな俺", rss: "http://blog.livedoor.jp/news23vip/index.xml" },
+  { name: "IT速報", rss: "http://blog.livedoor.jp/itsoku/index.xml" },
   { name: "Happyou FS", rss: "https://www.happyou.info/fs/gen.php?u=-974488574&p=-1429471147" },
-  { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.rdf" }
+  { name: "汎用型自作PCまとめ", rss: "http://www.jisaka.com/index.xml" }
 ];
 
-// ▼ RSS2JSON から JSON を取得
+// ▼ AllOrigins で RSS を取得（XML のまま返る）
 async function fetchFeed(url) {
   const api = "https://api.allorigins.win/get?url=";
   const res = await fetch(api + encodeURIComponent(url));
   const json = await res.json();
-  return (new window.DOMParser()).parseFromString(json.contents, "text/xml");
+  const xml = new DOMParser().parseFromString(json.contents, "text/xml");
+  return xml;
 }
 
-
-// ▼ JSON 配列をそのまま使う
-function parseJsonFeed(items) {
-  return items.slice(0, 10).map(item => ({
-    title: item.title,
-    link: item.link,
-    date: item.pubDate   // ← ここを pubDate に
+// ▼ XML をパースして記事を取り出す
+function parseXmlFeed(xml) {
+  const items = [...xml.querySelectorAll("item")].slice(0, 10);
+  return items.map(item => ({
+    title: item.querySelector("title")?.textContent ?? "タイトルなし",
+    link: item.querySelector("link")?.textContent ?? "#",
+    date: item.querySelector("pubDate")?.textContent ?? null
   }));
 }
 
 // ▼ サイトごとの処理
 async function loadLatest(site) {
-  let items = [];
-
   try {
-    const jsonItems = await fetchFeed(site.rss);
-    items = parseJsonFeed(jsonItems);
+    const xml = await fetchFeed(site.rss);
+    const items = parseXmlFeed(xml);
+
+    let html = `<div class="site"><h2><a href="${site.rss}" target="_blank">${site.name}</a></h2><ul>`;
+    for (const item of items) {
+      const dateText = item.date ? new Date(item.date).toLocaleString() : "日付なし";
+      html += `<li><a href="${item.link}" target="_blank">${item.title}</a> <span>（${dateText}）</span></li>`;
+    }
+    html += "</ul></div>";
+    return html;
+
   } catch (e) {
     console.error(site.name, e);
     return `<div class="site"><h2>${site.name}</h2>取得できませんでした。</div>`;
   }
-
-  let html = `<div class="site"><h2><a href="${site.rss}" target="_blank">${site.name}</a></h2><ul>`;
-
-  for (const item of items) {
-    const dateText = item.date ? new Date(item.date).toLocaleString() : "日付なし";
-    html += `<li><a href="${item.link}" target="_blank">${item.title}</a> <span>（${dateText}）</span></li>`;
-  }
-
-  html += "</ul></div>";
-  return html;
 }
 
 // ▼ メイン処理
@@ -110,6 +108,7 @@ async function main() {
 
 main();
 </script>
+
 
 </body>
 </html>
