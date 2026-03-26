@@ -227,7 +227,15 @@ async function loadLatest(site) {
   if (!xmlText.includes("<item") &&
       !xmlText.includes("<entry") &&
       !xmlText.includes("rdf:li")) {
-    return `<div class="site"><h2>${site.name}</h2>取得できませんでした。</div>`;
+    return `
+      <div class="site">
+        <h2>
+          ${site.name}
+          <button onclick="deleteSite('${site.name}')">削除</button>
+        </h2>
+        <p>取得できませんでした。</p>
+      </div>
+    `;
   }
 
   const xml = new DOMParser().parseFromString(xmlText, "text/xml");
