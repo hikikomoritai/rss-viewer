@@ -347,19 +347,17 @@ function enableMouseSort() {
     placeholder.remove();
     placeholder = null;
 
-    // 並び順を保存
-    const newOrder = [...container.children].map(c => {
-      return settings.sites[Number(c.dataset.index)];
-    });
-
+    // ★ 修正：draggable のみを対象にする
+    const items = [...container.querySelectorAll(".draggable")];
+    const newOrder = items.map(c => settings.sites[Number(c.dataset.index)]);
     settings.sites = newOrder;
 
     // data-index を更新
-    [...container.children].forEach((c, i) => {
+    items.forEach((c, i) => {
       c.dataset.index = i;
     });
 
-    saveSettings(); // ← main() は呼ばない
+    saveSettings(); // ★ main() は呼ばない
 
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
