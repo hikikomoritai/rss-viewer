@@ -67,6 +67,14 @@ span.date {
 .dragging {
   opacity: 0.5;
 }
+.placeholder {
+  height: 40px;
+  background: #333;
+  border: 1px dashed #666;
+  margin-bottom: 6px;
+  border-radius: 5px;
+}
+
 </style>
 </head>
 <body>
@@ -272,20 +280,69 @@ function renderSiteSettings() {
 }
 
 // ▼ ドラッグ＆ドロップ並び替え
-function enableDragSort() {
+function enableMouseSort() {
   const container = document.getElementById("siteSettings");
-  let isDragging = false;
+  let draggingEl = null;
+  let placeholder = null;
+  let startY = 0;
+  let offsetY = 0;
 
-  container.addEventListener("dragstart", e => {
-    if (!e.target.classList.contains("draggable")) return;
-    isDragging = true;
-    e.target.classList.add("dragging");
+  container.querySelectorAll(".draggable").forEach(item => {
+    item.addEventListener("mousedown", e => {
+      draggingEl = item;
+      startY = e.clientY;
+      offsetY = e.clientY - item.getBoundingClientRect().top;
+
+      placeholder = document.createElement("div");
+      placeholder.className = "placeholder";
+      placeholder.style.height = item.offsetHeight + "px";
+
+      item.classList.add("dragging");
+      item.style.position = "absolute";
+      item.style.zIndex = "1000";
+      item.style.width = container.offsetWidth + "px";
+
+      container.insertBefore(placeholder, item.nextSibling);
+
+      moveAt(e.pageY);
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    });
   });
 
-  container.addEventListener("dragend", e => {
-    if (!e.target.classList.contains("draggable")) return;
-    e.target.classList.remove("dragging");
-    isDragging = false;
+  function moveAt(pageY) {
+    draggingEl.style.top = pageY - offsetY + "px";
+    draggingEl.style.left = container.getBoundingClientRect().left + "px";
+  }
+
+  function onMouseMove(e) {
+    moveAt(e.pageY);
+
+    const siblings = [...container.querySelectorAll(".draggable:not(.dragging)")];
+
+    for (const sib of siblings) {
+      const rect = sib.getBoundingClientRect();
+      if (e.clientY < rect.top + rect.height / 2) {
+        container.insertBefore(placeholder, sib);
+        return;
+      }
+    }
+
+    container.appendChild(placeholder);
+  }
+
+  function onMouseUp() {
+    draggingEl.classList.remove("dragging");
+    draggingEl.style.position = "";
+    draggingEl.style.top = "";
+    draggingEl.style.left = "";
+    draggingEl.style.width = "";
+    draggingEl.style.zIndex = "";
+
+    container.insertBefore(draggingEl, placeholder);
+    placeholder.remove();
+    placeholder = null;
 
     // 並び順を保存
     const newOrder = [...container.children].map(c => {
@@ -300,48 +357,11 @@ function enableDragSort() {
     });
 
     saveSettings();
+    main();
 
-    // ★重要：dragover が完全に止まってから再描画
-    setTimeout(() => {
-      main();
-    }, 0);
-  });
-
-  container.addEventListener("dragover", e => {
-    if (!isDragging) return;
-    e.preventDefault();
-
-    const dragging = document.querySelector(".dragging");
-    if (!dragging) return;
-
-    const afterElement = getDragAfterElement(container, e.clientY);
-    if (afterElement == null) {
-      container.appendChild(dragging);
-    } else {
-      container.insertBefore(dragging, afterElement);
-    }
-  });
-}
-
-// ▼ スクロールしてもズレない位置判定
-function getDragAfterElement(container, y) {
-  const scrollY = window.scrollY;
-  const draggableElements = [...container.querySelectorAll(".draggable:not(.dragging)")];
-
-  return draggableElements.reduce(
-    (closest, child) => {
-      const box = child.getBoundingClientRect();
-      const boxCenter = box.top + scrollY + box.height / 2;
-      const offset = y + scrollY - boxCenter;
-
-      if (offset < 0 && offset > closest.offset) {
-        return { offset: offset, element: child };
-      } else {
-        return closest;
-      }
-    },
-    { offset: Number.NEGATIVE_INFINITY }
-  ).element;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  }
 }
 
 // ▼ RSS 読み込み
@@ -427,6 +447,7 @@ async function main() {
   const results = await Promise.all(settings.sites.map(loadLatest));
   document.getElementById("sites").innerHTML = results.join("");
   renderSiteSettings(); // ★追加
+  enableMouseSort();
 }
 
 main();
