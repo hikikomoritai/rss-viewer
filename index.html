@@ -274,39 +274,43 @@ function renderSiteSettings() {
 // ▼ ドラッグ＆ドロップ並び替え
 function enableDragSort() {
   const container = document.getElementById("siteSettings");
+  let isDragging = false;
 
   container.addEventListener("dragstart", e => {
     if (!e.target.classList.contains("draggable")) return;
+    isDragging = true;
     e.target.classList.add("dragging");
   });
 
   container.addEventListener("dragend", e => {
     if (!e.target.classList.contains("draggable")) return;
     e.target.classList.remove("dragging");
-  
+    isDragging = false;
+
     // 並び順を保存
     const newOrder = [...container.children].map(c => {
-      const index = Number(c.dataset.index);
-      return settings.sites[index];
+      return settings.sites[Number(c.dataset.index)];
     });
-  
+
     settings.sites = newOrder;
-  
-    // ★重要：並び替え後に data-index を更新（これがないと必ず不安定になる）
+
+    // data-index を更新
     [...container.children].forEach((c, i) => {
       c.dataset.index = i;
     });
-  
+
     saveSettings();
-  
-    // ★dragend と DOM 再描画の競合を防ぐ
-    requestAnimationFrame(() => {
+
+    // ★重要：dragover が完全に止まってから再描画
+    setTimeout(() => {
       main();
-    });
+    }, 0);
   });
 
   container.addEventListener("dragover", e => {
+    if (!isDragging) return;
     e.preventDefault();
+
     const dragging = document.querySelector(".dragging");
     if (!dragging) return;
 
