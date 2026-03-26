@@ -282,13 +282,14 @@ function enableMouseSort() {
   const container = document.getElementById("siteSettings");
   let draggingEl = null;
   let placeholder = null;
-  let startY = 0;
   let offsetY = 0;
+  let containerRect = null;
 
   container.querySelectorAll(".draggable").forEach(item => {
     item.addEventListener("mousedown", e => {
       draggingEl = item;
-      startY = e.clientY;
+      containerRect = container.getBoundingClientRect();
+
       offsetY = e.clientY - item.getBoundingClientRect().top;
 
       placeholder = document.createElement("div");
@@ -311,7 +312,7 @@ function enableMouseSort() {
 
   function moveAt(pageY) {
     draggingEl.style.top = pageY - offsetY + "px";
-    draggingEl.style.left = container.getBoundingClientRect().left + "px";
+    draggingEl.style.left = containerRect.left + "px";
   }
 
   function onMouseMove(e) {
@@ -322,12 +323,16 @@ function enableMouseSort() {
     for (const sib of siblings) {
       const rect = sib.getBoundingClientRect();
       if (e.clientY < rect.top + rect.height / 2) {
-        container.insertBefore(placeholder, sib);
+        if (placeholder.nextSibling !== sib) {
+          container.insertBefore(placeholder, sib);
+        }
         return;
       }
     }
 
-    container.appendChild(placeholder);
+    if (placeholder.nextSibling !== null) {
+      container.appendChild(placeholder);
+    }
   }
 
   function onMouseUp() {
@@ -354,8 +359,7 @@ function enableMouseSort() {
       c.dataset.index = i;
     });
 
-    saveSettings();
-    main();
+    saveSettings(); // ← main() は呼ばない
 
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
