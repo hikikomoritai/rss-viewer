@@ -284,31 +284,54 @@ function enableMouseSort() {
   let placeholder = null;
   let offsetY = 0;
   let containerRect = null;
+  let startY = 0;
+  let isDragging = false;
 
   container.querySelectorAll(".draggable").forEach(item => {
     item.addEventListener("mousedown", e => {
+      startY = e.clientY;
       draggingEl = item;
       containerRect = container.getBoundingClientRect();
-
       offsetY = e.clientY - item.getBoundingClientRect().top;
 
-      placeholder = document.createElement("div");
-      placeholder.className = "placeholder";
-      placeholder.style.height = item.offsetHeight + "px";
-
-      item.classList.add("dragging");
-      item.style.position = "absolute";
-      item.style.zIndex = "1000";
-      item.style.width = container.offsetWidth + "px";
-
-      container.insertBefore(placeholder, item.nextSibling);
-
-      moveAt(e.pageY);
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+      document.addEventListener("mousemove", onMouseMoveStart);
+      document.addEventListener("mouseup", onMouseUpStart);
     });
   });
+
+  function onMouseMoveStart(e) {
+    if (Math.abs(e.clientY - startY) > 5) {
+      startDrag(e);
+      document.removeEventListener("mousemove", onMouseMoveStart);
+      document.removeEventListener("mouseup", onMouseUpStart);
+    }
+  }
+
+  function onMouseUpStart() {
+    // クリック扱い
+    document.removeEventListener("mousemove", onMouseMoveStart);
+    document.removeEventListener("mouseup", onMouseUpStart);
+  }
+
+  function startDrag(e) {
+    isDragging = true;
+
+    placeholder = document.createElement("div");
+    placeholder.className = "placeholder";
+    placeholder.style.height = draggingEl.offsetHeight + "px";
+
+    draggingEl.classList.add("dragging");
+    draggingEl.style.position = "absolute";
+    draggingEl.style.zIndex = "1000";
+    draggingEl.style.width = container.offsetWidth + "px";
+
+    container.insertBefore(placeholder, draggingEl.nextSibling);
+
+    moveAt(e.pageY);
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }
 
   function moveAt(pageY) {
     draggingEl.style.top = pageY - offsetY + "px";
@@ -336,32 +359,34 @@ function enableMouseSort() {
   }
 
   function onMouseUp() {
-  draggingEl.classList.remove("dragging");
-  draggingEl.style.position = "";
-  draggingEl.style.top = "";
-  draggingEl.style.left = "";
-  draggingEl.style.width = "";
-  draggingEl.style.zIndex = "";
+    draggingEl.classList.remove("dragging");
+    draggingEl.style.position = "";
+    draggingEl.style.top = "";
+    draggingEl.style.left = "";
+    draggingEl.style.width = "";
+    draggingEl.style.zIndex = "";
 
-  container.insertBefore(draggingEl, placeholder);
-  placeholder.remove();
-  placeholder = null;
+    container.insertBefore(draggingEl, placeholder);
+    placeholder.remove();
+    placeholder = null;
 
-  // ★ draggable のみを対象にする
-  const items = [...container.querySelectorAll(".draggable")];
-  const newOrder = items.map(c => settings.sites[Number(c.dataset.index)]);
-  settings.sites = newOrder;
+    const items = [...container.querySelectorAll(".draggable")];
+    const newOrder = items.map(c => settings.sites[Number(c.dataset.index)]);
+    settings.sites = newOrder;
 
-  // data-index を更新
-  items.forEach((c, i) => {
-    c.dataset.index = i;
-  });
+    items.forEach((c, i) => {
+      c.dataset.index = i;
+    });
 
-  saveSettings(); // ★ main() は呼ばない
+    saveSettings();
 
-  document.removeEventListener("mousemove", onMouseMove);
-  document.removeEventListener("mouseup", onMouseUp);
+    isDragging = false;
+
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  }
 }
+
 
 
 // ▼ RSS 読み込み
