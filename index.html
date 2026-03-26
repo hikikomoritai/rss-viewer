@@ -311,12 +311,14 @@ function enableDragSort() {
 
 // ★ズレない位置判定ロジック
 function getDragAfterElement(container, y) {
+  const scrollY = window.scrollY; // ★スクロール補正
   const draggableElements = [...container.querySelectorAll(".draggable:not(.dragging)")];
 
   return draggableElements.reduce(
     (closest, child) => {
       const box = child.getBoundingClientRect();
-      const offset = y - (box.top + box.height / 2);
+      const boxCenter = box.top + scrollY + box.height / 2; // ★補正後の中心位置
+      const offset = y + scrollY - boxCenter; // ★マウス位置も補正
 
       if (offset < 0 && offset > closest.offset) {
         return { offset: offset, element: child };
