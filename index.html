@@ -283,22 +283,23 @@ function enableDragSort() {
   container.addEventListener("dragend", e => {
     if (!e.target.classList.contains("draggable")) return;
     e.target.classList.remove("dragging");
-
+  
     // 並び順を保存
-    const newOrder = [...container.children].map((c, i) => {
-      return settings.sites[Number(c.dataset.index)];
+    const newOrder = [...container.children].map(c => {
+      const index = Number(c.dataset.index);
+      return settings.sites[index];
     });
-
+  
     settings.sites = newOrder;
-
-    // ★ data-index を更新（これが重要）
+  
+    // ★重要：並び替え後に data-index を更新（これがないと必ず不安定になる）
     [...container.children].forEach((c, i) => {
       c.dataset.index = i;
     });
-
+  
     saveSettings();
-
-    // ★ dragend と再描画の競合を防ぐ
+  
+    // ★dragend と DOM 再描画の競合を防ぐ
     requestAnimationFrame(() => {
       main();
     });
