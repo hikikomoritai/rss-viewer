@@ -289,28 +289,30 @@ function enableMouseSort() {
 
   container.querySelectorAll(".draggable").forEach(item => {
     item.addEventListener("mousedown", e => {
-      startY = e.clientY;
       draggingEl = item;
+      startY = e.clientY;
       containerRect = container.getBoundingClientRect();
       offsetY = e.clientY - item.getBoundingClientRect().top;
 
-      document.addEventListener("mousemove", onMouseMoveStart);
-      document.addEventListener("mouseup", onMouseUpStart);
+      // ドラッグ準備
+      document.addEventListener("mousemove", onMoveCheck);
+      document.addEventListener("mouseup", onCancelCheck);
     });
   });
 
-  function onMouseMoveStart(e) {
-    if (Math.abs(e.clientY - startY) > 5) {
+  // 少しでも動いたらドラッグ開始
+  function onMoveCheck(e) {
+    if (Math.abs(e.clientY - startY) > 2) {
       startDrag(e);
-      document.removeEventListener("mousemove", onMouseMoveStart);
-      document.removeEventListener("mouseup", onMouseUpStart);
+      document.removeEventListener("mousemove", onMoveCheck);
+      document.removeEventListener("mouseup", onCancelCheck);
     }
   }
 
-  function onMouseUpStart() {
-    // クリック扱い
-    document.removeEventListener("mousemove", onMouseMoveStart);
-    document.removeEventListener("mouseup", onMouseUpStart);
+  // 動かずに mouseup → クリック扱い
+  function onCancelCheck() {
+    document.removeEventListener("mousemove", onMoveCheck);
+    document.removeEventListener("mouseup", onCancelCheck);
   }
 
   function startDrag(e) {
@@ -329,8 +331,8 @@ function enableMouseSort() {
 
     moveAt(e.pageY);
 
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mousemove", onDragMove);
+    document.addEventListener("mouseup", onDragEnd);
   }
 
   function moveAt(pageY) {
@@ -338,7 +340,7 @@ function enableMouseSort() {
     draggingEl.style.left = containerRect.left + "px";
   }
 
-  function onMouseMove(e) {
+  function onDragMove(e) {
     moveAt(e.pageY);
 
     const siblings = [...container.querySelectorAll(".draggable:not(.dragging)")];
@@ -358,7 +360,7 @@ function enableMouseSort() {
     }
   }
 
-  function onMouseUp() {
+  function onDragEnd() {
     draggingEl.classList.remove("dragging");
     draggingEl.style.position = "";
     draggingEl.style.top = "";
@@ -370,6 +372,7 @@ function enableMouseSort() {
     placeholder.remove();
     placeholder = null;
 
+    // 並び替え保存
     const items = [...container.querySelectorAll(".draggable")];
     const newOrder = items.map(c => settings.sites[Number(c.dataset.index)]);
     settings.sites = newOrder;
@@ -382,12 +385,10 @@ function enableMouseSort() {
 
     isDragging = false;
 
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
+    document.removeEventListener("mousemove", onDragMove);
+    document.removeEventListener("mouseup", onDragEnd);
   }
 }
-
-
 
 // ▼ RSS 読み込み
 async function loadLatest(site) {
