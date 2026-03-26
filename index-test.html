@@ -76,6 +76,7 @@ span.date {
   <input id="newSiteName" placeholder="サイト名">
   <input id="newSiteUrl" placeholder="RSS URL">
   <button id="addSite">追加</button>
+  <button id="resetSettings">クッキーリセット</button>
 </div>
 
 <div id="sites"></div>
@@ -106,6 +107,7 @@ document.getElementById("limit").value = settings.limit;
 function saveSettings() {
   settings.limit = document.getElementById("limit").value;
   localStorage.setItem("rss_settings", JSON.stringify(settings));
+  main();   // ← 保存した瞬間に再読み込み
 }
 document.getElementById("saveSettings").onclick = saveSettings;
 
@@ -117,6 +119,12 @@ document.getElementById("addSite").onclick = () => {
 
   settings.sites.push({ name, rss: url });
   saveSettings();
+  main();
+};
+  
+document.getElementById("resetSettings").onclick = () => {
+  localStorage.removeItem("rss_settings");
+  settings = { limit: 10, sites: defaultSites };
   main();
 };
 
