@@ -283,16 +283,20 @@ function enableDragSort() {
   container.addEventListener("dragend", e => {
     if (!e.target.classList.contains("draggable")) return;
     e.target.classList.remove("dragging");
-
+  
     // 並び順を保存
     const newOrder = [...container.children].map(c => {
       const index = Number(c.getAttribute("data-index"));
       return settings.sites[index];
     });
-
+  
     settings.sites = newOrder;
     saveSettings();
-    main();
+  
+    // ★ここを修正：1フレーム遅らせて再描画（固まり防止）
+    requestAnimationFrame(() => {
+      main();
+    });
   });
 
   container.addEventListener("dragover", e => {
