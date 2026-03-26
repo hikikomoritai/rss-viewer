@@ -53,12 +53,15 @@ span.date {
   border: 1px solid #333;
   margin-bottom: 20px;
 }
+#settingsBox {
+  display: none; /* 初期状態は閉じる */
+}
 </style>
 </head>
 <body>
 
 <h1>まとめサイト 最新記事一覧（カスタム版）</h1>
-
+<button id="toggleSettings">設定を開く/閉じる</button>
 <div id="settingsBox">
   <h2>設定</h2>
 
@@ -149,10 +152,8 @@ document.getElementById("addSite").onclick = async () => {
     return;
   }
 
-  // ▼ XML としてパース
   const xml = new DOMParser().parseFromString(xmlText, "text/xml");
 
-  // ▼ RSS / Atom / RDF のどれにも該当しない → 追加しない
   const isValid =
     xml.querySelector("item") ||
     xml.querySelector("entry") ||
@@ -172,14 +173,15 @@ document.getElementById("addSite").onclick = async () => {
       "名称未設定サイト";
   }
 
-  // ▼ ここまで来たら追加してOK
-  settings.sites.push({ name, rss: url });
+  // ▼ 追加したサイトを一番上に
+  settings.sites.unshift({ name, rss: url });
+
   saveSettings();
   main();
 
   alert("サイトを追加しました");
 };
-  
+ 
 document.getElementById("exportSettings").onclick = () => {
   const data = JSON.stringify(settings, null, 2);
   const blob = new Blob([data], { type: "application/json" });
@@ -227,6 +229,10 @@ document.getElementById("resetSettings").onclick = () => {
   localStorage.removeItem("rss_settings");
   settings = { limit: 10, sites: defaultSites };
   main();
+};
+document.getElementById("toggleSettings").onclick = () => {
+  const box = document.getElementById("settingsBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
 };
 
 // ▼ Cloudflare Worker 経由で CORS 回避
