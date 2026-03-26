@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>RSS Viewer TEST</title>
+<style>
+body { font-family: sans-serif; padding: 20px; }
+.site-item { margin-bottom: 10px; }
+.article { border: 1px solid #ccc; padding: 10px; margin: 5px 0; }
+.article-title { cursor: pointer; font-weight: bold; }
+.article-content { display: none; padding-top: 5px; }
+</style>
+</head>
+<body>
+
+<h1>RSS Viewer TEST</h1>
+
+<h2>設定</h2>
+表示件数:
+<select id="limit">
+  <option value="5">5件</option>
+  <option value="10">10件</option>
+  <option value="20">20件</option>
+</select>
+
+<button id="saveSettings">設定を保存</button>
+
+<h2>サイト一覧</h2>
+<div id="siteList"></div>
+
+<input id="newSiteName" placeholder="サイト名">
+<input id="newSiteUrl" placeholder="RSS URL">
+<button id="addSite">追加</button>
+
+<hr>
+
+<h2>記事一覧</h2>
+<div id="articles"></div>
+
+<script>
+// ------------------------------
+// 設定ロード
+// ------------------------------
+const defaultSites = [
+  { name: "あにまんch", rss: "https://animanch.com/feed" },
+  { name: "不思議.net", rss: "https://world-fusigi.net/index.rdf" }
+];
+
+let settings = JSON.parse(localStorage.getItem("rss_settings")) || {
+  limit: 10,
+  sites: defaultSites,
+  collapsed: {}
+};
+
+// UI に反映
+document.getElementById("limit").value = settings.limit;
+
+// ------------------------------
+// サイト一覧表示
+// ------------------------------
+function renderSites() {
+  const list = document.getElementById("siteList");
+  list.innerHTML = "";
+
+  settings.sites.forEach((site, i) => {
+    const div = document.createElement("div");
+    div.className = "site-item";
+    div.innerHTML = `
+      ${site.name} (${site.rss})
+      <button onclick="removeSite(${i})">削除</button>
+      <button onclick="loadRSS('${site.rss}')">読み込み</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function removeSite(i) {
+  settings.sites.splice(i, 1);
+  saveSettings();
+  renderSites();
+}
+
+document.getElementById("addSite").onclick = () => {
+  const name = document.getElementById("newSiteName").value;
+  const url = document.getElementById("newSiteUrl").value;
+  if (!name || !url) return;
+
+  settings.sites.push({ name, rss: url });
+  saveSettings();
+  renderSites();
+};
+
+// ------------------------------
+// 設定保存
+// ------------------------------
+function saveSettings() {
+  settings.limit = document.getElementById("limit").value;
+  localStorage.setItem("rss_settings", JSON.stringify(settings));
+}
+
+document.getElementById("saveSettings").onclick = saveSettings;
+
+// ------------------------------
+// RSS 読み込み
+// ------------------------------
+async function loadRSS(url) {
+  const res = await fetch(url);
+  const text = await res.text();
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(text, "text/xml");
+
+  const items = [...xml.querySelectorAll("item")].slice(0, settings.limit);
+
+  const container = document.getElementById("articles");
+  container.innerHTML = "";
+
+  items.forEach((item, idx) => {
+    const title = item.querySelector("title")?.textContent || "No title";
+    const link = item.querySelector("link")?.textContent || "#";
+    const desc = item.querySelector("description")?.textContent || "";
+
+    const id = link;
+
+    const div = document.createElement("div");
+    div.className = "article";
+
+    div.innerHTML = `
+      <div class="article-title" onclick="toggleArticle('${id}')">${title}</div>
+      <div class="article-content" id="c_${id}">
+        <a href="${link}" target="_blank">記事を開く</a>
+        <p>${desc}</p>
+      </div>
+    `;
+
+    container.appendChild(div);
+
+    if (settings.collapsed[id]) {
+      document.getElementById("c_" + id).style.display = "block";
+    }
+  });
+}
+
+// ------------------------------
+// 折りたたみ
+// ------------------------------
+function toggleArticle(id) {
+  const el = document.getElementById("c_" + id);
+  const visible = el.style.display === "block";
+  el.style.display = visible ? "none" : "block";
+
+  settings.collapsed[id] = !visible;
+  saveSettings();
+}
+
+// 初期表示
+renderSites();
+</script>
+
+</body>
+</html>
