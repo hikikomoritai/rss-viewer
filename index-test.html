@@ -154,39 +154,6 @@ function toggleArticle(id) {
 
 // 初期表示
 renderSites();
-
-// ------------------------------
-// RSS 読み込み
-// ------------------------------
-async function loadRSS(url) {
-  const res = await fetch(url);
-  const text = await res.text();
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(text, "text/xml");
-
-  const items = [...xml.querySelectorAll("item")].slice(0, settings.limit);
-
-  const container = document.getElementById("articles");
-  container.innerHTML = "";
-
-  items.forEach(item => {
-    const title = item.querySelector("title")?.textContent || "No title";
-    const link = item.querySelector("link")?.textContent || "#";
-    const desc = item.querySelector("description")?.textContent || "";
-
-    const div = document.createElement("div");
-    div.className = "article";
-    div.innerHTML = `
-      <div class="article-title">${title}</div>
-      <div class="article-content">
-        <a href="${link}" target="_blank">記事を開く</a>
-        <p>${desc}</p>
-      </div>
-    `;
-    container.appendChild(div);
-  });
-}
-
 </script>
 </body>
 </html>
