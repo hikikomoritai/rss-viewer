@@ -114,7 +114,16 @@ document.getElementById("saveSettings").onclick = saveSettings;
 document.getElementById("addSite").onclick = async () => {
   let name = document.getElementById("newSiteName").value;
   const url = document.getElementById("newSiteUrl").value;
-  if (!url) return;
+  if (!url) {
+    alert("RSS URL を入力してください");
+    return;
+  }
+
+  // ▼ 重複チェック（RSS URL が同じなら弾く）
+  if (settings.sites.some(s => s.rss === url)) {
+    alert("このサイトはすでに登録されています");
+    return;
+  }
 
   // ▼ サイト名が空なら RSS から自動取得
   if (!name) {
@@ -122,7 +131,6 @@ document.getElementById("addSite").onclick = async () => {
       const xmlText = await fetchViaCloudflare(url);
       const xml = new DOMParser().parseFromString(xmlText, "text/xml");
 
-      // RSS / Atom / RDF すべて対応
       name =
         xml.querySelector("title")?.textContent?.trim() ||
         xml.querySelector("channel > title")?.textContent?.trim() ||
@@ -137,7 +145,6 @@ document.getElementById("addSite").onclick = async () => {
   saveSettings();
   main();
 };
-
   
 document.getElementById("resetSettings").onclick = () => {
   localStorage.removeItem("rss_settings");
