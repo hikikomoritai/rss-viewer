@@ -52,7 +52,20 @@ span.date {
   border-radius: 8px;
   border: 1px solid #333;
   margin-bottom: 20px;
-  display: none; /* 初期状態は閉じる */
+  display: none;
+}
+
+/* ★追加：ドラッグ用 */
+.draggable {
+  cursor: grab;
+  padding: 6px;
+  border: 1px solid #444;
+  margin-bottom: 6px;
+  background: #222;
+  border-radius: 5px;
+}
+.dragging {
+  opacity: 0.5;
 }
 </style>
 </head>
@@ -60,10 +73,11 @@ span.date {
 
 <h1>まとめサイト 最新記事一覧（カスタム版）</h1>
 <button id="toggleSettings">設定を開く/閉じる</button>
+
 <div id="settingsBox">
   <h2>設定</h2>
 
-  表示件数：
+  表示件数（デフォルト）：
   <select id="limit">
     <option value="5">5件</option>
     <option value="10">10件</option>
@@ -77,16 +91,19 @@ span.date {
   <input id="newSiteName" placeholder="サイト名（空欄で自動取得）">
   <input id="newSiteUrl" placeholder="RSS URL">
   <button id="addSite">追加</button>
-    
+
+  <h3>サイトごとの設定（並び替え＋件数）</h3>
+  <div id="siteSettings"></div>
+
   <div style="margin-top:10px;">
     <button id="exportSettings">設定をエクスポート</button>
   </div>
-  
+
   <div style="margin-top:10px;">
     <input type="file" id="importSettings" style="display:none">
     <button id="importButton">設定をインポート</button>
   </div>
-  
+
   <div style="margin-top:10px;">
     <button id="resetSettings">クッキーリセット</button>
   </div>
@@ -97,7 +114,7 @@ span.date {
 <script>
 // ▼ デフォルトサイト
 const defaultSites = [
-  { name: "GIGAZINE", rss: "https://gigazine.net/news/rss_2.0" }
+  { name: "GIGAZINE", rss: "https://gigazine.net/news/rss_2.0", limit: 10 }
 ];
 
 // ▼ localStorage から読み込み
@@ -111,9 +128,9 @@ document.getElementById("limit").value = settings.limit;
 
 // ▼ 設定保存
 function saveSettings() {
-  settings.limit = document.getElementById("limit").value;
+  settings.limit = Number(document.getElementById("limit").value);
   localStorage.setItem("rss_settings", JSON.stringify(settings));
-  main();   // ← 保存した瞬間に再読み込み
+  main();
 }
 document.getElementById("saveSettings").onclick = saveSettings;
 
@@ -127,34 +144,30 @@ document.getElementById("addSite").onclick = async () => {
     return;
   }
 
-  // ▼ 重複チェック
   if (settings.sites.some(s => s.rss === url)) {
     alert("このサイトはすでに登録されています");
     return;
   }
 
-  // ▼ RSS を事前チェック（取得できなければ追加しない）
   let xmlText = "";
   try {
     xmlText = await fetchViaCloudflare(url);
   } catch (e) {
-    alert("RSS を取得できませんでした（ネットワークエラー）");
+    alert("RSS を取得できませんでした");
     return;
   }
 
   const xml = new DOMParser().parseFromString(xmlText, "text/xml");
-
   const isValid =
     xml.querySelector("item") ||
     xml.querySelector("entry") ||
     xml.querySelector("rdf\\:li");
 
   if (!isValid) {
-    alert("RSS を取得できませんでした（RSS/Atom/RDF ではありません）");
+    alert("RSS を取得できませんでした");
     return;
   }
 
-  // ▼ サイト名が空なら RSS から自動取得
   if (!name) {
     name =
       xml.querySelector("title")?.textContent?.trim() ||
@@ -163,15 +176,13 @@ document.getElementById("addSite").onclick = async () => {
       "名称未設定サイト";
   }
 
-  // ▼ 追加したサイトを一番上に
-  settings.sites.unshift({ name, rss: url });
-
+  settings.sites.unshift({ name, rss: url, limit: settings.limit });
   saveSettings();
   main();
-
   alert("サイトを追加しました");
 };
- 
+
+// ▼ エクスポート
 document.getElementById("exportSettings").onclick = () => {
   const data = JSON.stringify(settings, null, 2);
   const blob = new Blob([data], { type: "application/json" });
@@ -184,6 +195,8 @@ document.getElementById("exportSettings").onclick = () => {
 
   URL.revokeObjectURL(url);
 };
+
+// ▼ インポート
 document.getElementById("importButton").onclick = () => {
   document.getElementById("importSettings").click();
 };
@@ -196,13 +209,10 @@ document.getElementById("importSettings").onchange = (event) => {
   reader.onload = () => {
     try {
       const imported = JSON.parse(reader.result);
-
-      // ▼ バリデーション（最低限）
       if (!imported.sites || !Array.isArray(imported.sites)) {
         alert("設定ファイルが不正です");
         return;
       }
-
       settings = imported;
       localStorage.setItem("rss_settings", JSON.stringify(settings));
       main();
@@ -211,115 +221,77 @@ document.getElementById("importSettings").onchange = (event) => {
       alert("設定ファイルの読み込みに失敗しました");
     }
   };
-
   reader.readAsText(file);
 };
 
+// ▼ リセット
 document.getElementById("resetSettings").onclick = () => {
   localStorage.removeItem("rss_settings");
   settings = { limit: 10, sites: defaultSites };
   main();
 };
+
+// ▼ 設定開閉
 document.getElementById("toggleSettings").onclick = () => {
   const box = document.getElementById("settingsBox");
   const current = window.getComputedStyle(box).display;
-
   box.style.display = current === "none" ? "block" : "none";
 };
 
-// ▼ Cloudflare Worker 経由で CORS 回避
+// ▼ Cloudflare Worker
 async function fetchViaCloudflare(url) {
-  if (url.includes("mute-sound-848f")) {
-    const res = await fetch(url);
-    return await res.text();
-  }
   const api = "https://summer-truth-854e.watashigyuudondesu.workers.dev/?v=2&url=";
   const res = await fetch(api + encodeURIComponent(url));
   return await res.text();
 }
 
-// ▼ RSS / Atom / RDF 自動判定
-async function loadLatest(site) {
-  let xmlText = await fetchViaCloudflare(site.rss);
-
-  if (!xmlText.includes("<item") &&
-      !xmlText.includes("<entry") &&
-      !xmlText.includes("rdf:li")) {
-    return `<div class="site"><h2>${site.name}</h2>取得できませんでした。</div>`;
-  }
-
-  const xml = new DOMParser().parseFromString(xmlText, "text/xml");
-  let items = [...xml.querySelectorAll("item, entry")];
-
-  if (items.length === 0) {
-    const links = [...xml.getElementsByTagName("rdf:li")].map(li =>
-      li.getAttribute("rdf:resource")
-    );
-
-    items = links.map(link => {
-      const itemNode = xml.querySelector(`item[rdf\\:about="${link}"]`);
-      const title = itemNode?.querySelector("title")?.textContent ?? link;
-      const date = itemNode?.querySelector("dc\\:date")?.textContent || null;
-      return { title, link, date };
-    }).slice(0, settings.limit);
-  } else {
-    items = items.slice(0, settings.limit).map(item => {
-      const title = item.querySelector("title")?.textContent ?? "タイトルなし";
-      const link =
-        item.querySelector("link")?.textContent?.trim() ||
-        item.querySelector("link")?.getAttribute("href") ||
-        item.querySelector("guid")?.textContent?.trim() ||
-        item.getAttribute("rdf:about") ||
-        "#";
-
-      const pubDate =
-        item.querySelector("pubDate")?.textContent ||
-        item.querySelector("dc\\:date")?.textContent ||
-        item.querySelector("updated")?.textContent ||
-        item.querySelector("published")?.textContent ||
-        item.querySelector("date")?.textContent;
-
-      return { title, link, date: pubDate };
-    });
-  }
-
-  const siteUrl = site.rss.replace(/\/[^/]*$/, "");
-  let html = `
-  <div class="site">
-    <h2>
-      <a href="${siteUrl}" target="_blank">${site.name}</a>
-      <button onclick="deleteSite('${site.name}')">削除</button>
-    </h2>
-    <ul>
-  `;
-
-  for (const item of items) {
-    const dateText = item.date ? new Date(item.date).toLocaleString() : "日付なし";
-    html += `
-      <li>
-        <a href="${item.link}" target="_blank">${item.title}</a><br>
-        <span class="date">（${dateText}）</span>
-      </li>
-    `;
-  }
-
-  html += "</ul></div>";
-  return html;
-}
-function deleteSite(name) {
-  settings.sites = settings.sites.filter(s => s.name !== name);
+// ▼ 個別 limit 更新
+function updateSiteLimit(index, value) {
+  settings.sites[index].limit = Number(value);
   saveSettings();
   main();
 }
 
-// ▼ メイン処理（並列）
-async function main() {
-  const results = await Promise.all(settings.sites.map(loadLatest));
-  document.getElementById("sites").innerHTML = results.join("");
+// ▼ サイト設定 UI（並び替え＋件数）
+function renderSiteSettings() {
+  const box = document.getElementById("siteSettings");
+  box.innerHTML = settings.sites
+    .map(
+      (site, index) => `
+    <div class="draggable" draggable="true" data-index="${index}">
+      <strong>${site.name}</strong>
+      <input type="number" min="1" value="${site.limit || settings.limit}"
+        onchange="updateSiteLimit(${index}, this.value)"
+        style="width:60px; margin-left:10px;">
+    </div>
+  `
+    )
+    .join("");
+
+  enableDragSort();
 }
 
-main();
-</script>
+// ▼ ドラッグ＆ドロップ並び替え
+function enableDragSort() {
+  const container = document.getElementById("siteSettings");
+  const draggables = container.querySelectorAll(".draggable");
 
-</body>
-</html>
+  draggables.forEach(el => {
+    el.addEventListener("dragstart", () => el.classList.add("dragging"));
+    el.addEventListener("dragend", () => {
+      el.classList.remove("dragging");
+
+      const newOrder = [...container.children].map(c => {
+        const index = Number(c.getAttribute("data-index"));
+        return settings.sites[index];
+      });
+
+      settings.sites = newOrder;
+      saveSettings();
+      main();
+    });
+  });
+
+  container.addEventListener("dragover", e => {
+    e.preventDefault();
+    const dragging = document
