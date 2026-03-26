@@ -75,8 +75,22 @@ span.date {
   <h3>サイト追加</h3>
   <input id="newSiteName" placeholder="サイト名（空欄で自動取得）">
   <input id="newSiteUrl" placeholder="RSS URL">
-  <button id="addSite">追加</button>
-  <button id="resetSettings">クッキーリセット</button>
+  <div style="margin-top:10px;">
+    <button id="addSite">追加</button>
+  </div>
+  
+  <div style="margin-top:10px;">
+    <button id="resetSettings">クッキーリセット</button>
+  </div>
+  
+  <div style="margin-top:10px;">
+    <button id="exportSettings">設定をエクスポート</button>
+  </div>
+  
+  <div style="margin-top:10px;">
+    <input type="file" id="importSettings" style="display:none">
+    <button id="importButton">設定をインポート</button>
+  </div>
 </div>
 
 <div id="sites"></div>
@@ -146,6 +160,49 @@ document.getElementById("addSite").onclick = async () => {
   main();
 };
   
+document.getElementById("exportSettings").onclick = () => {
+  const data = JSON.stringify(settings, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "rss-settings.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+};
+document.getElementById("importButton").onclick = () => {
+  document.getElementById("importSettings").click();
+};
+
+document.getElementById("importSettings").onchange = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+
+      // ▼ バリデーション（最低限）
+      if (!imported.sites || !Array.isArray(imported.sites)) {
+        alert("設定ファイルが不正です");
+        return;
+      }
+
+      settings = imported;
+      localStorage.setItem("rss_settings", JSON.stringify(settings));
+      main();
+      alert("設定をインポートしました");
+    } catch (e) {
+      alert("設定ファイルの読み込みに失敗しました");
+    }
+  };
+
+  reader.readAsText(file);
+};
+
 document.getElementById("resetSettings").onclick = () => {
   localStorage.removeItem("rss_settings");
   settings = { limit: 10, sites: defaultSites };
