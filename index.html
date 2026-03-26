@@ -274,33 +274,58 @@ function renderSiteSettings() {
 // ▼ ドラッグ＆ドロップ並び替え
 function enableDragSort() {
   const container = document.getElementById("siteSettings");
-  const draggables = container.querySelectorAll(".draggable");
 
-  draggables.forEach(el => {
-    el.addEventListener("dragstart", () => el.classList.add("dragging"));
-    el.addEventListener("dragend", () => {
-      el.classList.remove("dragging");
+  container.addEventListener("dragstart", e => {
+    if (!e.target.classList.contains("draggable")) return;
+    e.target.classList.add("dragging");
+  });
 
-      const newOrder = [...container.children].map(c => {
-        const index = Number(c.getAttribute("data-index"));
-        return settings.sites[index];
-      });
+  container.addEventListener("dragend", e => {
+    if (!e.target.classList.contains("draggable")) return;
+    e.target.classList.remove("dragging");
 
-      settings.sites = newOrder;
-      saveSettings();
-      main();
+    // 並び順を保存
+    const newOrder = [...container.children].map(c => {
+      const index = Number(c.getAttribute("data-index"));
+      return settings.sites[index];
     });
+
+    settings.sites = newOrder;
+    saveSettings();
+    main();
   });
 
   container.addEventListener("dragover", e => {
     e.preventDefault();
     const dragging = document.querySelector(".dragging");
-    const after = [...container.children].find(child => {
-      return e.clientY < child.offsetTop + child.offsetHeight / 2;
-    });
-    if (after) container.insertBefore(dragging, after);
-    else container.appendChild(dragging);
+    if (!dragging) return;
+
+    const afterElement = getDragAfterElement(container, e.clientY);
+    if (afterElement == null) {
+      container.appendChild(dragging);
+    } else {
+      container.insertBefore(dragging, afterElement);
+    }
   });
+}
+
+// ★ズレない位置判定ロジック
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll(".draggable:not(.dragging)")];
+
+  return draggableElements.reduce(
+    (closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - (box.top + box.height / 2);
+
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    },
+    { offset: Number.NEGATIVE_INFINITY }
+  ).element;
 }
 
 // ▼ RSS 読み込み
