@@ -133,31 +133,50 @@ document.getElementById("addSite").onclick = async () => {
     return;
   }
 
-  // ▼ 重複チェック（RSS URL が同じなら弾く）
+  // ▼ 重複チェック
   if (settings.sites.some(s => s.rss === url)) {
     alert("このサイトはすでに登録されています");
     return;
   }
 
-  // ▼ サイト名が空なら RSS から自動取得
-  if (!name) {
-    try {
-      const xmlText = await fetchViaCloudflare(url);
-      const xml = new DOMParser().parseFromString(xmlText, "text/xml");
-
-      name =
-        xml.querySelector("title")?.textContent?.trim() ||
-        xml.querySelector("channel > title")?.textContent?.trim() ||
-        xml.querySelector("feed > title")?.textContent?.trim() ||
-        "名称未設定サイト";
-    } catch (e) {
-      name = "名称未設定サイト";
-    }
+  // ▼ RSS を事前チェック（取得できなければ追加しない）
+  let xmlText = "";
+  try {
+    xmlText = await fetchViaCloudflare(url);
+  } catch (e) {
+    alert("RSS を取得できませんでした（ネットワークエラー）");
+    return;
   }
 
+  // ▼ XML としてパース
+  const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+
+  // ▼ RSS / Atom / RDF のどれにも該当しない → 追加しない
+  const isValid =
+    xml.querySelector("item") ||
+    xml.querySelector("entry") ||
+    xml.querySelector("rdf\\:li");
+
+  if (!isValid) {
+    alert("RSS を取得できませんでした（RSS/Atom/RDF ではありません）");
+    return;
+  }
+
+  // ▼ サイト名が空なら RSS から自動取得
+  if (!name) {
+    name =
+      xml.querySelector("title")?.textContent?.trim() ||
+      xml.querySelector("channel > title")?.textContent?.trim() ||
+      xml.querySelector("feed > title")?.textContent?.trim() ||
+      "名称未設定サイト";
+  }
+
+  // ▼ ここまで来たら追加してOK
   settings.sites.push({ name, rss: url });
   saveSettings();
   main();
+
+  alert("サイトを追加しました");
 };
   
 document.getElementById("exportSettings").onclick = () => {
@@ -227,15 +246,7 @@ async function loadLatest(site) {
   if (!xmlText.includes("<item") &&
       !xmlText.includes("<entry") &&
       !xmlText.includes("rdf:li")) {
-    return `
-      <div class="site">
-        <h2>
-          ${site.name}
-          <button onclick="deleteSite('${site.name}')">削除</button>
-        </h2>
-        <p>取得できませんでした。</p>
-      </div>
-    `;
+    return `<div class="site"><h2>${site.name}</h2>取得できませんでした。</div>`;
   }
 
   const xml = new DOMParser().parseFromString(xmlText, "text/xml");
