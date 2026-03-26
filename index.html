@@ -336,33 +336,33 @@ function enableMouseSort() {
   }
 
   function onMouseUp() {
-    draggingEl.classList.remove("dragging");
-    draggingEl.style.position = "";
-    draggingEl.style.top = "";
-    draggingEl.style.left = "";
-    draggingEl.style.width = "";
-    draggingEl.style.zIndex = "";
+  draggingEl.classList.remove("dragging");
+  draggingEl.style.position = "";
+  draggingEl.style.top = "";
+  draggingEl.style.left = "";
+  draggingEl.style.width = "";
+  draggingEl.style.zIndex = "";
 
-    container.insertBefore(draggingEl, placeholder);
-    placeholder.remove();
-    placeholder = null;
+  container.insertBefore(draggingEl, placeholder);
+  placeholder.remove();
+  placeholder = null;
 
-    // ★ 修正：draggable のみを対象にする
-    const items = [...container.querySelectorAll(".draggable")];
-    const newOrder = items.map(c => settings.sites[Number(c.dataset.index)]);
-    settings.sites = newOrder;
+  // ★ draggable のみを対象にする
+  const items = [...container.querySelectorAll(".draggable")];
+  const newOrder = items.map(c => settings.sites[Number(c.dataset.index)]);
+  settings.sites = newOrder;
 
-    // data-index を更新
-    items.forEach((c, i) => {
-      c.dataset.index = i;
-    });
+  // data-index を更新
+  items.forEach((c, i) => {
+    c.dataset.index = i;
+  });
 
-    saveSettings(); // ★ main() は呼ばない
+  saveSettings(); // ★ main() は呼ばない
 
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
-  }
+  document.removeEventListener("mousemove", onMouseMove);
+  document.removeEventListener("mouseup", onMouseUp);
 }
+
 
 // ▼ RSS 読み込み
 async function loadLatest(site) {
