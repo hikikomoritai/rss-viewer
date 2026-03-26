@@ -294,4 +294,102 @@ function enableDragSort() {
 
   container.addEventListener("dragover", e => {
     e.preventDefault();
-    const dragging = document
+    const dragging = document.querySelector(".dragging");
+    const after = [...container.children].find(child => {
+      return e.clientY < child.offsetTop + child.offsetHeight / 2;
+    });
+    if (after) container.insertBefore(dragging, after);
+    else container.appendChild(dragging);
+  });
+}
+
+// ▼ RSS 読み込み
+async function loadLatest(site) {
+  let xmlText = await fetchViaCloudflare(site.rss);
+
+  if (!xmlText.includes("<item") &&
+      !xmlText.includes("<entry") &&
+      !xmlText.includes("rdf:li")) {
+    return `<div class="site"><h2>${site.name}</h2>取得できませんでした。</div>`;
+  }
+
+  const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+  let items = [...xml.querySelectorAll("item, entry")];
+
+  const limit = site.limit || settings.limit;
+
+  if (items.length === 0) {
+    const links = [...xml.getElementsByTagName("rdf:li")].map(li =>
+      li.getAttribute("rdf:resource")
+    );
+
+    items = links.map(link => {
+      const itemNode = xml.querySelector(`item[rdf\\:about="${link}"]`);
+      const title = itemNode?.querySelector("title")?.textContent ?? link;
+      const date = itemNode?.querySelector("dc\\:date")?.textContent || null;
+      return { title, link, date };
+    }).slice(0, limit);
+  } else {
+    items = items.slice(0, limit).map(item => {
+      const title = item.querySelector("title")?.textContent ?? "タイトルなし";
+      const link =
+        item.querySelector("link")?.textContent?.trim() ||
+        item.querySelector("link")?.getAttribute("href") ||
+        item.querySelector("guid")?.textContent?.trim() ||
+        item.getAttribute("rdf:about") ||
+        "#";
+
+      const pubDate =
+        item.querySelector("pubDate")?.textContent ||
+        item.querySelector("dc\\:date")?.textContent ||
+        item.querySelector("updated")?.textContent ||
+        item.querySelector("published")?.textContent ||
+        item.querySelector("date")?.textContent;
+
+      return { title, link, date: pubDate };
+    });
+  }
+
+  const siteUrl = site.rss.replace(/\/[^/]*$/, "");
+  let html = `
+  <div class="site">
+    <h2>
+      <a href="${siteUrl}" target="_blank">${site.name}</a>
+      <button onclick="deleteSite('${site.name}')">削除</button>
+    </h2>
+    <ul>
+  `;
+
+  for (const item of items) {
+    const dateText = item.date ? new Date(item.date).toLocaleString() : "日付なし";
+    html += `
+      <li>
+        <a href="${item.link}" target="_blank">${item.title}</a><br>
+        <span class="date">（${dateText}）</span>
+      </li>
+    `;
+  }
+
+  html += "</ul></div>";
+  return html;
+}
+
+// ▼ サイト削除
+function deleteSite(name) {
+  settings.sites = settings.sites.filter(s => s.name !== name);
+  saveSettings();
+  main();
+}
+
+// ▼ メイン
+async function main() {
+  const results = await Promise.all(settings.sites.map(loadLatest));
+  document.getElementById("sites").innerHTML = results.join("");
+  renderSiteSettings(); // ★追加
+}
+
+main();
+</script>
+
+</body>
+</html>
