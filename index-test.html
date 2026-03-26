@@ -230,7 +230,9 @@ document.getElementById("resetSettings").onclick = () => {
 };
 document.getElementById("toggleSettings").onclick = () => {
   const box = document.getElementById("settingsBox");
-  box.style.display = box.style.display === "none" ? "block" : "none";
+  const current = window.getComputedStyle(box).display;
+
+  box.style.display = current === "none" ? "block" : "none";
 };
 
 // ▼ Cloudflare Worker 経由で CORS 回避
