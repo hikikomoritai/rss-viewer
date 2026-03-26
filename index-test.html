@@ -90,7 +90,6 @@ const defaultSites = [
   { name: "Game*Spark", rss: "https://www.gamespark.jp/rss/index.rdf" },
   { name: "北森瓦版", rss: "https://northwood.blog.fc2.com/?xml" },
   { name: "痛いニュース(ﾉ∀`)", rss: "https://itainews.com/index.rdf" },
-  { name: "あにまんch", rss: "https://animanch.com/feed" },
   { name: "無題のドキュメント", rss: "https://mute-sound-848f.watashigyuudondesu.workers.dev/mudaino" }
 ];
 
@@ -112,15 +111,33 @@ function saveSettings() {
 document.getElementById("saveSettings").onclick = saveSettings;
 
 // ▼ サイト追加
-document.getElementById("addSite").onclick = () => {
-  const name = document.getElementById("newSiteName").value;
+document.getElementById("addSite").onclick = async () => {
+  let name = document.getElementById("newSiteName").value;
   const url = document.getElementById("newSiteUrl").value;
-  if (!name || !url) return;
+  if (!url) return;
+
+  // ▼ サイト名が空なら RSS から自動取得
+  if (!name) {
+    try {
+      const xmlText = await fetchViaCloudflare(url);
+      const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+
+      // RSS / Atom / RDF すべて対応
+      name =
+        xml.querySelector("title")?.textContent?.trim() ||
+        xml.querySelector("channel > title")?.textContent?.trim() ||
+        xml.querySelector("feed > title")?.textContent?.trim() ||
+        "名称未設定サイト";
+    } catch (e) {
+      name = "名称未設定サイト";
+    }
+  }
 
   settings.sites.push({ name, rss: url });
   saveSettings();
   main();
 };
+
   
 document.getElementById("resetSettings").onclick = () => {
   localStorage.removeItem("rss_settings");
