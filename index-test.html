@@ -155,13 +155,16 @@ function toggleArticle(id) {
 // 初期表示
 renderSites();
 
+// ------------------------------
+// RSS 読み込み
+// ------------------------------
 async function loadRSS(url) {
   const res = await fetch(url);
   const text = await res.text();
   const parser = new DOMParser();
   const xml = parser.parseFromString(text, "text/xml");
 
-  const items = [...xml.querySelectorAll("item")].slice(0, 10);
+  const items = [...xml.querySelectorAll("item")].slice(0, settings.limit);
 
   const container = document.getElementById("articles");
   container.innerHTML = "";
@@ -183,6 +186,7 @@ async function loadRSS(url) {
     container.appendChild(div);
   });
 }
+
 </script>
 </body>
 </html>
