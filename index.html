@@ -200,9 +200,7 @@ select:focus {
 <script>
 // ▼ デフォルトサイト
 const defaultSites = [
-  { name: "GIGAZINE", rss: "https://gigazine.net/", limit: 10 },
-  { name: "tes", rss: "https://news.yahoo.co.jp/rss/topics/top-picks.xml", limit: 10 },
-  { name: "tt", rss: "https://animanch.com/feed", limit: 10 }
+  { name: "GIGAZINE", rss: "https://gigazine.net/", limit: 10 }
 ];
 
 // ▼ localStorage から読み込み
@@ -503,7 +501,7 @@ async function loadLatest(site, index) {
           ${site.name}
           <input type="number" class="limitInput" value="${site.limit}" min="1"
             onchange="updateSiteLimit(${index}, this.value)">
-          <button class="deleteBtn" onclick="deleteSite('${site.name}')">削除</button>
+          <button class="deleteBtn" onclick="deleteSite('${index}')">削除</button>
         </h2>
         取得できませんでした。
       </div>`;
@@ -586,9 +584,14 @@ async function main() {
     renderSortMode();
     return;
   }
-  const results = await Promise.all(settings.sites.map(loadLatest));
+
+  const results = await Promise.all(
+    settings.sites.map((site, index) => loadLatest(site, index))
+  );
+
   document.getElementById("sites").innerHTML = results.join("");
 }
+
 
 main();
 </script>
