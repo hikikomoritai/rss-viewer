@@ -200,14 +200,17 @@ select:focus {
 <script>
 // ▼ デフォルトサイト
 const defaultSites = [
-  { name: "GIGAZINE", rss: "https://gigazine.net/news/rss_2.0", limit: 10 }
+  { name: "GIGAZINE", rss: "https://gigazine.net/", limit: 10 },
+  { name: "tes", rss: "https://news.yahoo.co.jp/rss/topics/top-picks.xml", limit: 10 },
+  { name: "tt", rss: "https://animanch.com/feed", limit: 10 }
 ];
 
 // ▼ localStorage から読み込み
 let settings = JSON.parse(localStorage.getItem("rss_settings")) || {
   limit: 10,
-  sites: defaultSites
+  sites: JSON.parse(JSON.stringify(defaultSites)) // ← ここが重要
 };
+
 
 // ▼ UI に反映
 document.getElementById("limit").value = settings.limit;
@@ -333,9 +336,13 @@ document.getElementById("importSettings").onchange = (event) => {
 // ▼ リセット
 document.getElementById("resetSettings").onclick = () => {
   localStorage.removeItem("rss_settings");
-  settings = { limit: 10, sites: defaultSites };
+  settings = {
+    limit: 10,
+    sites: JSON.parse(JSON.stringify(defaultSites)) // ← 深いコピー
+  };
   main();
 };
+
 
 // ▼ 設定開閉
 document.getElementById("toggleSettings").onclick = () => {
@@ -496,6 +503,7 @@ async function loadLatest(site, index) {
           ${site.name}
           <input type="number" class="limitInput" value="${site.limit}" min="1"
             onchange="updateSiteLimit(${index}, this.value)">
+          <button class="deleteBtn" onclick="deleteSite('${site.name}')">削除</button>
         </h2>
         取得できませんでした。
       </div>`;
@@ -546,7 +554,7 @@ async function loadLatest(site, index) {
         <a href="${site.rss.replace(/\/[^/]*$/, "")}" target="_blank">${site.name}</a>
         <input type="number" class="limitInput" value="${site.limit}" min="1"
           onchange="updateSiteLimit(${index}, this.value)">
-        <button class="deleteBtn" onclick="deleteSite('${site.name}')">削除</button>
+        <button class="deleteBtn" onclick="deleteSite(${index})">削除</button>
       </h2>
       <ul>
   `;
@@ -566,9 +574,8 @@ async function loadLatest(site, index) {
 }
 
 // ▼ サイト削除
-function deleteSite(name) {
-  settings.sites = settings.sites.filter(s => s.name !== name);
-  settings.sites.splice(name, 1);
+function deleteSite(index) {
+  settings.sites.splice(index, 1);
   saveSettings();
   main();
 }
