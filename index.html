@@ -396,18 +396,19 @@ function enableMouseSort(container, onSorted) {
 
   let offsetY = 0;
 
-    container.addEventListener("mousedown", e => {
-      if (e.target.classList.contains("deleteBtn")) {
-        e.stopPropagation();
-        return;
-      }
+  container.addEventListener("pointerdown", e => {
+    if (e.target.classList.contains("deleteBtn")) {
+      e.stopPropagation();
+      return;
+    }
 
     const target = e.target.closest(".draggable");
     if (!target) return;
 
     dragging = target;
-    const rect = dragging.getBoundingClientRect();
+    dragging.setPointerCapture(e.pointerId);
 
+    const rect = dragging.getBoundingClientRect();
     offsetY = e.clientY - rect.top;
 
     // 浮かせる
@@ -416,7 +417,7 @@ function enableMouseSort(container, onSorted) {
     dragging.style.zIndex = 1000;
     dragging.classList.add("dragging");
 
-    // 元の位置に placeholder を置く
+    // placeholder を置く
     dragging.parentNode.insertBefore(placeholder, dragging.nextSibling);
 
     moveAt(e.pageY);
@@ -427,6 +428,7 @@ function enableMouseSort(container, onSorted) {
     }
 
     const move = e2 => {
+      if (!dragging) return;
       moveAt(e2.pageY);
 
       const items = [...container.querySelectorAll(".draggable:not(.dragging)")];
@@ -441,8 +443,11 @@ function enableMouseSort(container, onSorted) {
       else container.appendChild(placeholder);
     };
 
-    const up = () => {
-      // 元の位置に戻す
+    const up = e2 => {
+      if (!dragging) return;
+
+      dragging.releasePointerCapture(e2.pointerId);
+
       dragging.style.position = "";
       dragging.style.top = "";
       dragging.style.left = "";
@@ -457,12 +462,12 @@ function enableMouseSort(container, onSorted) {
 
       onSorted();
 
-      document.removeEventListener("mousemove", move);
-      document.removeEventListener("mouseup", up);
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", up);
     };
 
-    document.addEventListener("mousemove", move);
-    document.addEventListener("mouseup", up);
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", up);
   });
 }
 
