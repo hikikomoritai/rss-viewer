@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -55,7 +56,6 @@ span.date {
   display: none;
 }
 
-/* ★追加：ドラッグ用 */
 .draggable {
   cursor: grab;
   padding: 6px;
@@ -75,7 +75,7 @@ span.date {
   border-radius: 5px;
 }
 button {
-  background: #224a8b;      /* 青 */
+  background: #224a8b;
   color: white;
   border: none;
   padding: 6px 12px;
@@ -85,11 +85,11 @@ button {
 }
 
 button:hover {
-  background: #2563eb;      /* 濃い青 */
+  background: #2563eb;
 }
 
 button:active {
-  background: #456bd4;      /* さらに濃い青 */
+  background: #456bd4;
 }
 input {
   background: #1f2937;
@@ -105,8 +105,8 @@ input:focus {
   box-shadow: 0 0 4px #3b82f6;
 }
 select {
-  background: #1f2937;      /* ダーク背景 */
-  color: #f3f4f6;           /* 明るい文字 */
+  background: #1f2937;
+  color: #f3f4f6;
   border: 1px solid #4b5563;
   padding: 4px 6px;
   border-radius: 4px;
@@ -115,11 +115,11 @@ select {
 
 select:focus {
   outline: none;
-  border-color: #3b82f6;    /* 青いフォーカス */
+  border-color: #3b82f6;
   box-shadow: 0 0 4px #3b82f6;
 }
 .limitInput {
-  width: 40px;      /* ← ここが幅 */
+  width: 40px;
   text-align: right;
   background: #1f2937;
   color: #f3f4f6;
@@ -146,14 +146,20 @@ select:focus {
   background: #dc2626;
 }
 .draggable {
-  position: relative; /* ★ これが重要 */
+  position: relative;
   padding: 8px;
   border: 1px solid #444;
   margin-bottom: 6px;
   background: #1f2937;
   border-radius: 6px;
 }
-
+.sitenameInput, .siteUrlInput {
+  width: 300px;
+  margin-right: 6px;
+}
+.siteUrlInput {
+  width: 400px;
+}
 </style>
 </head>
 <body>
@@ -172,14 +178,15 @@ select:focus {
     <option value="50">50件</option>
   </select>
 
-  <button id="saveSettings">適用</button>
+  <button id="saveSettings" onclick="applyBulkLimit()">適用</button>
 
-  <h3>サイト追加</h3>
-  <input id="newSiteName" placeholder="サイト名（空欄で自動取得）">
-  <input id="newSiteUrl" placeholder="RSS URL">
+
+  <h3>サイト追加（サイトURLからRSS自動取得）</h3>
+  <input id="newSiteName" class="siteNameInput" placeholder="サイト名（空欄で自動取得）">
+  <input id="newSiteUrl" class="siteUrlInput" placeholder="サイトURLまたはRSS URLを入力（例：https://xxx.xxx/）">
   <button id="addSite">追加</button>
   <div style="margin-top:10px;">
-  <button id="toggleSort">サイト並び替えモード</button>
+  <button id="toggleSort">サイト並び替え</button>
   </div>
   <div style="margin-top:10px;">
     <button id="exportSettings">設定をエクスポート</button>
@@ -206,7 +213,7 @@ const defaultSites = [
 // ▼ localStorage から読み込み
 let settings = JSON.parse(localStorage.getItem("rss_settings")) || {
   limit: 10,
-  sites: JSON.parse(JSON.stringify(defaultSites)) // ← ここが重要
+  sites: JSON.parse(JSON.stringify(defaultSites))
 };
 
 
@@ -215,23 +222,26 @@ document.getElementById("limit").value = settings.limit;
 
 // ▼ 設定保存
 function saveSettings() {
+  localStorage.setItem("rss_settings", JSON.stringify(settings));
+}
+
+
+function applyBulkLimit() {
   const v = Number(document.getElementById("limit").value);
 
-  // グローバル設定（UI 初期値用）
+  // デフォルト値を更新
   settings.limit = v;
 
-  // ★ 一括設定を押した瞬間だけ全サイトを上書き
+  // 既存サイトにも適用
   settings.sites.forEach(site => {
     site.limit = v;
   });
 
-  localStorage.setItem("rss_settings", JSON.stringify(settings));
-  main();
+  saveSettings();
+  main(); // 再描画
 }
 
-
-
-document.getElementById("saveSettings").onclick = saveSettings;
+document.getElementById("saveSettings").onclick = applyBulkLimit;
 
 // ▼ サイト追加
 document.getElementById("addSite").onclick = async () => {
@@ -276,6 +286,8 @@ document.getElementById("addSite").onclick = async () => {
   }
 
   settings.sites.unshift({ name, rss: url, limit: settings.limit });
+  document.getElementById("newSiteUrl").value = "";
+  document.getElementById("newSiteName").value = "";
   saveSettings();
   main();
   alert("サイトを追加しました");
@@ -295,9 +307,16 @@ document.getElementById("exportSettings").onclick = () => {
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
 
+  // ★ 日付を付けたファイル名を生成
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const fileName = `rss-settings-${yyyy}${mm}${dd}.json`;
+
   const a = document.createElement("a");
   a.href = url;
-  a.download = "rss-settings.json";
+  a.download = fileName;   // ★ ここに日付入りファイル名をセット
   a.click();
 
   URL.revokeObjectURL(url);
@@ -456,6 +475,8 @@ function renderSortMode() {
   list.id = "sortList";
 
   settings.sites.forEach((s, i) => {
+    applyLimitBoundsStored(s);
+
     const row = document.createElement("div");
     row.className = "draggable";
     row.dataset.index = i;
@@ -463,7 +484,8 @@ function renderSortMode() {
     row.innerHTML = `
       <button class="deleteBtn" onclick="deleteSite(${i})">✕</button>
       <strong>≡ ${s.name}</strong>
-      <input type="number" class="limitInput" value="${s.limit}" min="1"
+      <input type="number" class="limitInput"
+        value="${s.limit}" min="1" max="${s._maxItems}"
         onchange="updateSiteLimit(${i}, this.value)">
     `;
 
@@ -487,11 +509,11 @@ function renderSortMode() {
   });
 }
 
-
 // ▼ RSS 読み込み
 async function loadLatest(site, index) {
   let xmlText = await fetchViaCloudflare(site.rss);
 
+  // RSS が取得できなかった場合
   if (!xmlText.includes("<item") &&
       !xmlText.includes("<entry") &&
       !xmlText.includes("rdf:li")) {
@@ -501,7 +523,7 @@ async function loadLatest(site, index) {
           ${site.name}
           <input type="number" class="limitInput" value="${site.limit}" min="1"
             onchange="updateSiteLimit(${index}, this.value)">
-          <button class="deleteBtn" onclick="deleteSite('${index}')">削除</button>
+          <button class="deleteBtn" onclick="deleteSite(${index})">削除</button>
         </h2>
         取得できませんでした。
       </div>`;
@@ -510,9 +532,7 @@ async function loadLatest(site, index) {
   const xml = new DOMParser().parseFromString(xmlText, "text/xml");
   let items = [...xml.querySelectorAll("item, entry")];
 
-  const limit = site.limit;
-
-
+  // RDF の場合
   if (items.length === 0) {
     const links = [...xml.getElementsByTagName("rdf:li")].map(li =>
       li.getAttribute("rdf:resource")
@@ -523,9 +543,9 @@ async function loadLatest(site, index) {
       const title = itemNode?.querySelector("title")?.textContent ?? link;
       const date = itemNode?.querySelector("dc\\:date")?.textContent || null;
       return { title, link, date };
-    }).slice(0, limit);
+    });
   } else {
-    items = items.slice(0, limit).map(item => {
+    items = items.map(item => {
       const title = item.querySelector("title")?.textContent ?? "タイトルなし";
       const link =
         item.querySelector("link")?.textContent?.trim() ||
@@ -545,19 +565,24 @@ async function loadLatest(site, index) {
     });
   }
 
-  // ▼ ★ここで input を追加する
+  // ★ サイトの最大件数を取得
+  const limit = applyLimitBounds(site, items);
+
+  const limitedItems = items.slice(0, limit);
+
   let html = `
     <div class="site">
       <h2>
         <a href="${site.rss.replace(/\/[^/]*$/, "")}" target="_blank">${site.name}</a>
-        <input type="number" class="limitInput" value="${site.limit}" min="1"
+        <input type="number" class="limitInput"
+          value="${site.limit}" min="1" max="${site._maxItems}"
           onchange="updateSiteLimit(${index}, this.value)">
         <button class="deleteBtn" onclick="deleteSite(${index})">削除</button>
       </h2>
       <ul>
   `;
 
-  for (const item of items) {
+  for (const item of limitedItems) {
     const dateText = item.date ? new Date(item.date).toLocaleString() : "日付なし";
     html += `
       <li>
@@ -567,8 +592,28 @@ async function loadLatest(site, index) {
     `;
   }
 
-  html += "</ul></div>";
+  html += `</ul></div>`;
   return html;
+}
+
+function applyLimitBounds(site, items) {
+  const maxItems = items.length;
+
+  if (site.limit > maxItems) {
+    site.limit = maxItems;
+    saveSettings();
+  }
+
+  site._maxItems = maxItems;
+  return site.limit;
+}
+
+function applyLimitBoundsStored(site) {
+  if (site.limit > site._maxItems) {
+    site.limit = site._maxItems;
+    saveSettings();
+  }
+  return site.limit;
 }
 
 // ▼ サイト削除
@@ -591,7 +636,6 @@ async function main() {
 
   document.getElementById("sites").innerHTML = results.join("");
 }
-
 
 main();
 </script>
