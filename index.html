@@ -62,17 +62,18 @@ span.date {
   border: 1px solid #444;
   margin-bottom: 6px;
   background: #222;
-  border-radius: 5px;
+  border-radius: 6px;
+  touch-action: none;
 }
 .dragging {
   opacity: 0.5;
 }
 .placeholder {
-  height: 40px;
   background: #333;
   border: 1px dashed #666;
   margin-bottom: 6px;
-  border-radius: 5px;
+  border-radius: 6px;
+  padding: 6px;
 }
 button {
   background: #224a8b;
@@ -95,8 +96,9 @@ input {
   background: #1f2937;
   color: #f3f4f6;
   border: 1px solid #4b5563;
-  padding: 4px 6px;
-  border-radius: 4px;
+  padding: 6px 6px;
+  border-radius: 6px;
+  font-size: 16px;
 }
 
 input:focus {
@@ -108,9 +110,10 @@ select {
   background: #1f2937;
   color: #f3f4f6;
   border: 1px solid #4b5563;
-  padding: 4px 6px;
-  border-radius: 4px;
+  padding: 6px 6px;
+  border-radius: 6px;
   appearance: none;         /* ブラウザ標準の矢印を消す */
+  font-size: 16px;
 }
 
 select:focus {
@@ -119,27 +122,69 @@ select:focus {
   box-shadow: 0 0 4px #3b82f6;
 }
 .limitInput {
-  width: 40px;
-  text-align: right;
+  text-align: center;
   background: #1f2937;
   color: #f3f4f6;
   border: 1px solid #4b5563;
-  border-radius: 4px;
-  padding: 2px 4px;
+  padding: 6px 1px;
+  border-radius: 6px;
+  font-size: 16px;
+  width: 40px;
+}
+/* 標準の ▲▼ を消す */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.numberWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.errorWrapper {
+  height: 32px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.customSpinner {
+  display: flex;
+  flex-direction: column;
+  margin-left: 4px;
+  gap: 2px;
+}
+
+.customSpinner button {
+  width: 20px;
+  height: 16px;
+  font-size: 12px;
+  padding: 0;
+}
+.siteHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.siteHeader h2 {
+  margin: 0;
 }
 .site {
   position: relative;
 }
 .deleteBtn {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 10px;
+  right: 10px;
   background: #a12f2f;
   color: white;
   border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 16px;
 }
 
 .deleteBtn:hover {
@@ -152,20 +197,22 @@ select:focus {
   margin-bottom: 6px;
   background: #1f2937;
   border-radius: 6px;
-  touch-action: none;
 }
-.sitenameInput, .siteUrlInput {
-  width: 300px;
+.siteNameInput {
+  width: 200px;
   margin-right: 6px;
 }
 .siteUrlInput {
-  width: 400px;
+  width: 420px;
+}
+.sortTitle {
+  font-size: 20px;
 }
 </style>
 </head>
 <body>
 
-<h1>まとめサイト 最新記事一覧（カスタム版）</h1>
+<h1>まとめサイト 最新記事一覧（カスタム版a）</h1>
 <button id="toggleSettings">設定を開く/閉じる</button>
 
 <div id="settingsBox">
@@ -184,7 +231,7 @@ select:focus {
 
   <h3>サイト追加（サイトURLからRSS自動取得）</h3>
   <input id="newSiteName" class="siteNameInput" placeholder="サイト名（空欄で自動取得）">
-  <input id="newSiteUrl" class="siteUrlInput" placeholder="サイトURLまたはRSS URLを入力（例：https://xxx.xxx/）">
+  <input id="newSiteUrl" class="siteUrlInput" placeholder="サイトURLまたはRSS URL入力（例：https://xxx.xxx/）">
   <button id="addSite">追加</button>
   <div style="margin-top:10px;">
   <button id="toggleSort">サイト並び替え</button>
@@ -402,7 +449,14 @@ function enableMouseSort(container, onSorted) {
       e.stopPropagation();
       return;
     }
-
+    if (e.target.classList.contains("limitInput")) {
+      e.stopPropagation();
+      return;
+    }
+    if (e.target.matches(".customSpinner, .customSpinner *")) {
+      e.stopPropagation();
+      return;
+    }
     const target = e.target.closest(".draggable");
     if (!target) return;
 
@@ -462,7 +516,7 @@ function enableMouseSort(container, onSorted) {
       dragging = null;
 
       onSorted();
-
+      renderSortMode(); // 並び替えモードの再描画
       document.removeEventListener("pointermove", move);
       document.removeEventListener("pointerup", up);
     };
@@ -471,6 +525,7 @@ function enableMouseSort(container, onSorted) {
     document.addEventListener("pointerup", up);
   });
 }
+
 
 /* ============================
    並び替えモードの描画
@@ -483,19 +538,32 @@ function renderSortMode() {
   list.id = "sortList";
 
   settings.sites.forEach((s, i) => {
-    applyLimitBoundsStored(s);
 
     const row = document.createElement("div");
     row.className = "draggable";
     row.dataset.index = i;
 
-    row.innerHTML = `
-      <button class="deleteBtn" onclick="deleteSite(${i})">✕</button>
-      <strong>≡ ${s.name}</strong>
-      <input type="number" class="limitInput"
-        value="${s.limit}" min="1" max="${s._maxItems}"
-        onchange="updateSiteLimit(${i}, this.value)">
-    `;
+    if (s.error) {
+      row.innerHTML = `
+        <strong class="sortTitle">≡ ${s.name}</strong>
+        <div class="errorWrapper">　</div>
+        <button class="deleteBtn" onclick="deleteSite(${i})">✕</button>
+      `;
+    } else {
+      row.innerHTML = `
+        <strong class="sortTitle">≡ ${s.name}</strong>
+        <div class="numberWrapper">
+          <input type="number" class="limitInput"
+            value="${s.limit}" min="1" max="${s._maxItems}"
+            onchange="updateSiteLimit(${i}, this.value)">
+          <div class="customSpinner">
+            <button data-dir="up">▲</button>
+            <button data-dir="down">▼</button>
+          </div>
+        </div>
+        <button class="deleteBtn" onclick="deleteSite(${i})">✕</button>
+      `;
+    }
 
     list.appendChild(row);
   });
@@ -517,6 +585,7 @@ function renderSortMode() {
   });
 }
 
+
 // ▼ RSS 読み込み
 async function loadLatest(site, index) {
   let xmlText = await fetchViaCloudflare(site.rss);
@@ -525,16 +594,20 @@ async function loadLatest(site, index) {
   if (!xmlText.includes("<item") &&
       !xmlText.includes("<entry") &&
       !xmlText.includes("rdf:li")) {
+    site.error = true;
     return `
       <div class="site">
-        <h2>
-          ${site.name}
-          <input type="number" class="limitInput" value="${site.limit}" min="1"
-            onchange="updateSiteLimit(${index}, this.value)">
-          <button class="deleteBtn" onclick="deleteSite(${index})">削除</button>
-        </h2>
+        <div class="siteHeader">
+          <h2>
+            <a href="${site.rss.replace(/\/[^/]*$/, "")}" target="_blank">${site.name}</a>
+          </h2>
+          <button class="deleteBtn" onclick="deleteSite(${index})">✕</button>
+        </div>
         取得できませんでした。
       </div>`;
+  }
+  else {
+    site.error = false;
   }
 
   const xml = new DOMParser().parseFromString(xmlText, "text/xml");
@@ -580,13 +653,21 @@ async function loadLatest(site, index) {
 
   let html = `
     <div class="site">
-      <h2>
-        <a href="${site.rss.replace(/\/[^/]*$/, "")}" target="_blank">${site.name}</a>
-        <input type="number" class="limitInput"
-          value="${site.limit}" min="1" max="${site._maxItems}"
-          onchange="updateSiteLimit(${index}, this.value)">
-        <button class="deleteBtn" onclick="deleteSite(${index})">削除</button>
-      </h2>
+      <div class="siteHeader">
+        <h2>
+          <a href="${site.rss.replace(/\/[^/]*$/, "")}" target="_blank">${site.name}</a>
+        </h2>
+        <div class="numberWrapper">
+          <input type="number" class="limitInput"
+            value="${site.limit}" min="1" max="${site._maxItems}"
+            onchange="updateSiteLimit(${index}, this.value)">
+          <div class="customSpinner">
+            <button data-dir="up">▲</button>
+            <button data-dir="down">▼</button>
+          </div>
+        </div>
+        <button class="deleteBtn" onclick="deleteSite(${index})">✕</button>
+      </div>
       <ul>
   `;
 
@@ -616,25 +697,35 @@ function applyLimitBounds(site, items) {
   return site.limit;
 }
 
-function applyLimitBoundsStored(site) {
-  if (site.limit > site._maxItems) {
-    site.limit = site._maxItems;
-    saveSettings();
-  }
-  return site.limit;
-}
-
 // ▼ サイト削除
 function deleteSite(index) {
   settings.sites.splice(index, 1);
   saveSettings();
   main();
 }
+function attachCustomSpinnerEvents() {
+  // ▲▼ ボタンで数値変更
+  document.querySelectorAll(".customSpinner button").forEach(btn => {
+    btn.addEventListener("click", e => {
+      const dir = e.target.dataset.dir;
+      const wrapper = e.target.closest(".numberWrapper");
+      const input = wrapper.querySelector(".limitInput");
+
+      let val = Number(input.value);
+      if (dir === "up") val++;
+      if (dir === "down") val--;
+
+      input.value = val;
+      input.dispatchEvent(new Event("change"));
+    });
+  });
+}
 
 // ▼ メイン
 async function main() {
   if (sortMode) {
     renderSortMode();
+    attachCustomSpinnerEvents();
     return;
   }
 
@@ -643,8 +734,8 @@ async function main() {
   );
 
   document.getElementById("sites").innerHTML = results.join("");
+  attachCustomSpinnerEvents();
 }
-
 main();
 </script>
 
