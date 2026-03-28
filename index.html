@@ -420,7 +420,8 @@ document.getElementById("toggleSettings").onclick = () => {
 
 // ▼ Cloudflare Worker
 async function fetchViaCloudflare(url) {
-  const api = "https://summer-truth-854e.watashigyuudondesu.workers.dev/?v=2&url=";
+  //const api = "http://127.0.0.1:8787/?url=";
+  const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?url=";
   const res = await fetch(api + encodeURIComponent(url));
   return await res.text();
 }
