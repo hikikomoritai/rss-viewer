@@ -418,8 +418,8 @@ document.getElementById("toggleSettings").onclick = () => {
 
 // ▼ Cloudflare Worker
 async function fetchViaCloudflare(url) {
-  const api = "http://localhost:8787/?url=";
-  //const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?url=";
+  //const api = "http://localhost:8787/?url=";
+  const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?url=";
   const res = await fetch(api + encodeURIComponent(url));
   return await res.text();
 }
