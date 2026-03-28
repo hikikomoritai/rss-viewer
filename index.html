@@ -234,7 +234,7 @@ input[type="number"]::-webkit-outer-spin-button {
   <input id="newSiteUrl" class="siteUrlInput" placeholder="サイトURLまたはRSS URL入力（例：https://xxx.xxx/）">
   <button id="addSite">追加</button>
   <div style="margin-top:10px;">
-  <button id="toggleSort">サイト並び替え</button>
+  <button id="toggleSort">並び替え</button>
   </div>
   <div style="margin-top:10px;">
     <button id="exportSettings">設定をエクスポート</button>
@@ -723,12 +723,14 @@ function attachCustomSpinnerEvents() {
 
 // ▼ メイン
 async function main() {
+  const btn = document.getElementById("toggleSort");
   if (sortMode) {
+    btn.textContent = "通常表示に戻る";
     renderSortMode();
     attachCustomSpinnerEvents();
     return;
   }
-
+  btn.textContent = "並び替えリスト表示";
   const results = await Promise.all(
     settings.sites.map((site, index) => loadLatest(site, index))
   );
