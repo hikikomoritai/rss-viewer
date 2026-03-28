@@ -297,7 +297,7 @@ document.getElementById("addSite").onclick = async () => {
   const url = document.getElementById("newSiteUrl").value;
 
   if (!url) {
-    alert("RSS URL を入力してください");
+    alert("URL を入力してください");
     return;
   }
 
@@ -306,15 +306,13 @@ document.getElementById("addSite").onclick = async () => {
     return;
   }
 
-  let xmlText = "";
-  try {
-    xmlText = await fetchViaCloudflare(url);
-  } catch (e) {
+  const result = await fetchAndValidateRSS(url);
+  if (!result.ok) {
     alert("RSS を取得できませんでした");
     return;
   }
 
-  const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+  const xml = new DOMParser().parseFromString(result.xml, "application/xml");
   const isValid =
     xml.querySelector("item") ||
     xml.querySelector("entry") ||
@@ -420,12 +418,32 @@ document.getElementById("toggleSettings").onclick = () => {
 
 // ▼ Cloudflare Worker
 async function fetchViaCloudflare(url) {
-  //const api = "http://127.0.0.1:8787/?url=";
-  const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?url=";
+  const api = "http://localhost:8787/?url=";
+  //const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?url=";
   const res = await fetch(api + encodeURIComponent(url));
   return await res.text();
 }
 
+async function fetchAndValidateRSS(url) {
+  let xmlText = "";
+
+  try {
+    xmlText = await fetchViaCloudflare(url);
+  } catch (e) {
+    return { ok: false, xml: "", reason: "fetch-error" };
+  }
+
+  const hasItem =
+    xmlText.includes("<item") ||
+    xmlText.includes("<entry") ||
+    xmlText.includes("rdf:li");
+
+  if (!hasItem) {
+    return { ok: false, xml: xmlText, reason: "no-item" };
+  }
+
+  return { ok: true, xml: xmlText };
+}
 // ▼ 個別 limit 更新
 function updateSiteLimit(index, value) {
   settings.sites[index].limit = Number(value);
@@ -589,12 +607,9 @@ function renderSortMode() {
 
 // ▼ RSS 読み込み
 async function loadLatest(site, index) {
-  let xmlText = await fetchViaCloudflare(site.rss);
+  const result = await fetchAndValidateRSS(site.rss);
 
-  // RSS が取得できなかった場合
-  if (!xmlText.includes("<item") &&
-      !xmlText.includes("<entry") &&
-      !xmlText.includes("rdf:li")) {
+  if (!result.ok) {
     site.error = true;
     return `
       <div class="site">
@@ -607,12 +622,14 @@ async function loadLatest(site, index) {
         取得できませんでした。
       </div>`;
   }
-  else {
-    site.error = false;
-  }
+  site.error = false;
 
-  const xml = new DOMParser().parseFromString(xmlText, "text/xml");
-  let items = [...xml.querySelectorAll("item, entry")];
+  const xml = new DOMParser().parseFromString(result.xml, "application/xml");
+  
+  let items = [
+    ...xml.getElementsByTagName("item"),
+    ...xml.getElementsByTagName("entry")
+  ];
 
   // RDF の場合
   if (items.length === 0) {
