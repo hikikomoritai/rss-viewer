@@ -212,7 +212,7 @@ input[type="number"]::-webkit-outer-spin-button {
 </head>
 <body>
 
-<h1>まとめサイト 最新記事一覧（カスタム版a）</h1>
+<h1>まとめサイト 最新記事一覧（カスタム版）</h1>
 <button id="toggleSettings">設定を開く/閉じる</button>
 
 <div id="settingsBox">
@@ -418,8 +418,8 @@ document.getElementById("toggleSettings").onclick = () => {
 
 // ▼ Cloudflare Worker
 async function fetchViaCloudflare(url) {
-  //const api = "http://localhost:8787/?url=";
-  const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?url=";
+  const api = "http://localhost:8787/?url=";
+  //const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?url=";
   const res = await fetch(api + encodeURIComponent(url));
   return await res.text();
 }
