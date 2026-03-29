@@ -100,7 +100,7 @@ async function fetchViaCloudflare(url) {
   }
 
   // それ以外は今まで通り summer 経由
-  const api = "https://summer-truth-854e.watashigyuudondesu.workers.dev/?v=2&url=";
+  const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?v=2&url=";
   const res = await fetch(api + encodeURIComponent(url));
   return await res.text();
 }
