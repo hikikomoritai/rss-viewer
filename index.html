@@ -400,6 +400,8 @@ document.getElementById("importSettings").onchange = (event) => {
 
 // ▼ リセット
 document.getElementById("resetSettings").onclick = () => {
+  const ok = confirm("設定を初期化します。よろしいですか？\n（登録したサイトはすべて削除されます）");
+  if (!ok) return;
   localStorage.removeItem("rss_settings");
   settings = {
     limit: 10,
