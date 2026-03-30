@@ -292,14 +292,13 @@ input[type="number"]::-webkit-outer-spin-button {
 
   <button id="saveSettings" onclick="applyBulkLimit()">適用</button>
 
-
   <h3>サイト追加（サイトURLからRSS自動取得）</h3>
-<div id="urlDropArea" class="drop-area" style="margin-top:10px;">
-  <input id="newSiteName" class="siteNameInput" placeholder="サイト名（空欄で自動取得）">
-  <input id="newSiteUrl" class="siteUrlInput" placeholder="サイトURLまたはRSS URL入力">
-  <button id="addSite">追加</button>
-  <div class="import-desc">URL をドラッグして追加できます</div>
-</div>
+  <div id="urlDropArea" class="drop-area" style="margin-top:10px;">
+    <input id="newSiteName" class="siteNameInput" placeholder="サイト名（空欄で自動取得）">
+    <input id="newSiteUrl" class="siteUrlInput" placeholder="サイトURLまたはRSS URL入力">
+    <button id="addSite">追加</button>
+    <div class="import-desc">URL をドラッグして追加できます</div>
+  </div>
   <h3>設定のインポート/エクスポート</h3>
   <div id="dropArea" class="drop-area" style="margin-top:10px;">
     <input type="file" id="importSettings" accept="application/json" style="display:none">
@@ -307,7 +306,6 @@ input[type="number"]::-webkit-outer-spin-button {
     <button id="exportSettings">設定をエクスポート</button>
     <div class="import-desc">クリックまたは JSON ファイルをドラッグしてインポート</div>
   </div>
-
 
   <div style="margin-top:10px;">
     <button id="resetSettings">リセット</button>
@@ -357,7 +355,6 @@ document.getElementById("limit").value = settings.limit;
 function saveSettings() {
   localStorage.setItem("rss_settings", JSON.stringify(settings));
 }
-
 
 function applyBulkLimit() {
   const v = Number(document.getElementById("limit").value);
@@ -454,8 +451,6 @@ setupDropArea(
   (item) => item.kind === "string"
 );
 
-
-
 // ▼ サイト追加
 async function addSiteCore(url, name = "") {
   if (!url) return { ok: false, reason: "no-url" };
@@ -521,15 +516,6 @@ document.getElementById("addSite").onclick = async () => {
   showToast(`${result.name}を追加しました`);
 };
 
-/* ============================
-   並び替えモード
-============================ */
-let sortMode = false;
-
-document.getElementById("toggleSort").onclick = () => {
-  sortMode = !sortMode;
-  main();
-};
 // ▼ エクスポート
 document.getElementById("exportSettings").onclick = () => {
   const data = JSON.stringify(settings, null, 2);
@@ -551,6 +537,13 @@ document.getElementById("exportSettings").onclick = () => {
   a.click();
 
   URL.revokeObjectURL(url);
+};
+// ▼ クリックでファイル選択
+const importButton = document.getElementById("importButton");
+const importInput = document.getElementById("importSettings");
+importButton.onclick = () => importInput.click();
+importInput.onchange = () => {
+  if (importInput.files[0]) importFromFile(importInput.files[0]);
 };
 
 function importFromFile(file) {
@@ -689,7 +682,6 @@ function updateSiteLimit(index, value) {
   main();
 }
 
-
 //タイトル編集
 document.addEventListener("click", (e) => {
   if (!e.target.classList.contains("edit-title")) return;
@@ -817,8 +809,14 @@ function enableMouseSort(container, onSorted) {
     document.addEventListener("pointerup", up);
   });
 }
-
-
+/* ============================
+   並び替えモード
+============================ */
+let sortMode = false;
+document.getElementById("toggleSort").onclick = () => {
+  sortMode = !sortMode;
+  main();
+};
 /* ============================
    並び替えモードの描画
 ============================ */
