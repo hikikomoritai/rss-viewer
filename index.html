@@ -626,7 +626,8 @@ document.getElementById("resetSettings").onclick = () => {
 // ▼ 設定開閉
 const toggleBtn = document.getElementById("toggleSettings");
 const settingsBox = document.getElementById("settingsBox");
-
+settingsBox.style.display = "none";
+toggleBtn.textContent = "設定を開く";
 toggleBtn.onclick = () => {
   const isOpen = window.getComputedStyle(settingsBox).display !== "none";
 
