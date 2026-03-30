@@ -5,6 +5,9 @@
 <meta charset="UTF-8">
 <title>まとめサイト 最新記事一覧（カスタム版）</title>
 <style>
+/* ===========================
+   基本テーマ
+=========================== */
 body {
   font-family: sans-serif;
   margin: 20px;
@@ -17,19 +20,42 @@ h1 {
   color: #ffffff;
 }
 
-.site {
-  margin-bottom: 30px;
+/* ===========================
+   カード（サイト・設定共通）
+=========================== */
+.site,
+#settingsBox {
   background: #1e1e1e;
   padding: 15px;
   border-radius: 8px;
   border: 1px solid #333;
+  margin-bottom: 20px;
+}
+
+/* ===========================
+   サイトカード
+=========================== */
+.site {
+  position: relative; /* ← ✕ ボタンのために必須 */
+}
+
+.siteHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.siteHeader h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .site h2 a {
   color: #80cbc4;
   text-decoration: none;
 }
-
 .site h2 a:hover {
   text-decoration: underline;
 }
@@ -38,7 +64,6 @@ li a {
   color: #90caf9;
   text-decoration: none;
 }
-
 li a:hover {
   text-decoration: underline;
 }
@@ -47,34 +72,9 @@ span.date {
   color: #aaaaaa;
 }
 
-#settingsBox {
-  background: #1e1e1e;
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid #333;
-  margin-bottom: 20px;
-  display: none;
-}
-
-.draggable {
-  cursor: grab;
-  padding: 6px;
-  border: 1px solid #444;
-  margin-bottom: 6px;
-  background: #222;
-  border-radius: 6px;
-  touch-action: none;
-}
-.dragging {
-  opacity: 0.5;
-}
-.placeholder {
-  background: #333;
-  border: 1px dashed #666;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  padding: 6px;
-}
+/* ===========================
+   ボタン
+=========================== */
 button {
   background: #224a8b;
   color: white;
@@ -84,53 +84,59 @@ button {
   cursor: pointer;
   font-size: 14px;
 }
-
 button:hover {
   background: #2563eb;
 }
-
 button:active {
   background: #456bd4;
 }
-input {
-  background: #1f2937;
-  color: #f3f4f6;
-  border: 1px solid #4b5563;
-  padding: 6px 6px;
-  border-radius: 6px;
-  font-size: 16px;
+
+.deleteBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #a12f2f;
+}
+.deleteBtn:hover {
+  background: #dc2626;
 }
 
-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 4px #3b82f6;
+.edit-title {
+  padding: 4px 6px;
+  font-size: 16px;
+  background: #444;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
 }
+
+/* ===========================
+   入力フォーム
+=========================== */
+input,
 select {
   background: #1f2937;
   color: #f3f4f6;
   border: 1px solid #4b5563;
-  padding: 6px 6px;
+  padding: 6px;
   border-radius: 6px;
-  appearance: none;         /* ブラウザ標準の矢印を消す */
   font-size: 16px;
 }
 
+input:focus,
 select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 4px #3b82f6;
 }
+
 .limitInput {
-  text-align: center;
-  background: #1f2937;
-  color: #f3f4f6;
-  border: 1px solid #4b5563;
-  padding: 6px 1px;
-  border-radius: 6px;
-  font-size: 16px;
   width: 40px;
+  text-align: center;
+  padding: 6px 1px;
 }
+
 /* 標準の ▲▼ を消す */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
@@ -138,20 +144,23 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
+/* ===========================
+   件数スピナー
+=========================== */
 .numberWrapper {
-  position: relative;
   display: inline-flex;
   align-items: center;
 }
 .errorWrapper {
-  height: 32px;
-  position: relative;
+  height: auto;   /* ← 高さ固定を解除 */
+  min-height: 32px; /* ← 必要なら最低高さだけ確保 */
   display: inline-flex;
   align-items: center;
 }
+
 .customSpinner {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* ← 縦並びを強制 */
   margin-left: 4px;
   gap: 2px;
 }
@@ -162,73 +171,63 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 12px;
   padding: 0;
 }
-.siteHeader {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 
-.siteHeader h2 {
-  margin: 0;
-}
-.site {
-  position: relative;
-}
-.deleteBtn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #a12f2f;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-}
-.edit-title {
-  top: 10px;
-  padding: 4px 6px;
-  font-size: 16px;
-  background: #444;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.deleteBtn:hover {
-  background: #dc2626;
-}
+/* ===========================
+   並び替えモード
+=========================== */
 .draggable {
-  position: relative;
+  cursor: grab;
   padding: 8px;
   border: 1px solid #444;
   margin-bottom: 6px;
   background: #1f2937;
   border-radius: 6px;
+  position: relative;
+  touch-action: none;
 }
-.siteNameInput {
-  width: 200px;
-  margin-right: 6px;
+.dragging {
+  opacity: 0.5;
 }
-.siteUrlInput {
-  width: 420px;
+.placeholder {
+  background: #333;
+  border: 1px dashed #666;
+  border-radius: 6px;
+  padding: 6px;
+  margin-bottom: 6px;
 }
+
 .sortTitle {
   font-size: 20px;
 }
+
+/* ===========================
+   ドロップエリア（設定インポート）
+=========================== */
 .drop-area {
   padding: 20px;
-  border: 2px dashed #ccc;
+  border: 2px dashed #888;
   border-radius: 8px;
-  text-align: left; /* ← 左寄せ */
   width: 100%;
   max-width: 500px;
+  background: #1e1e1e; /* ダークUIに合わせる */
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .drop-area.dragover {
-  border-color: #4a90e2;
-  background: #eef6ff;
+  background: #2a2a2a;
+  border-color: #aaa;
+}
+
+.drop-area .zone-title {
+  font-size: 1em;
+  margin-bottom: 8px;
+  color: #ccc;
+}
+
+.drop-area .zone-desc {
+  font-size: 0.85em;
+  color: #777;
+  margin-top: 6px;
 }
 
 .import-desc {
@@ -237,9 +236,45 @@ input[type="number"]::-webkit-outer-spin-button {
   color: #666;
 }
 
+/* ===========================
+   入力欄サイズ
+=========================== */
+.siteNameInput {
+  width: 200px;
+  margin-right: 6px;
+}
+.siteUrlInput {
+  width: 420px;
+}
+
+/* ===========================
+   通知（トースト）
+=========================== */
+#toastContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.toast {
+  background: #333;
+  color: #fff;
+  padding: 10px 16px;
+  margin-top: 10px;
+  border-radius: 6px;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+.toast.fade-out {
+  opacity: 0;
+}
+
 </style>
 </head>
 <body>
+<div id="toastContainer"></div>
 
 <h1>まとめサイト 最新記事一覧（カスタム版）</h1>
 <button id="toggleSettings">設定を開く</button>
@@ -259,16 +294,17 @@ input[type="number"]::-webkit-outer-spin-button {
 
 
   <h3>サイト追加（サイトURLからRSS自動取得）</h3>
+<div id="urlDropArea" class="drop-area" style="margin-top:10px;">
   <input id="newSiteName" class="siteNameInput" placeholder="サイト名（空欄で自動取得）">
-  <input id="newSiteUrl" class="siteUrlInput" placeholder="サイトURLまたはRSS URL入力（例：https://xxx.xxx/）">
+  <input id="newSiteUrl" class="siteUrlInput" placeholder="サイトURLまたはRSS URL入力">
   <button id="addSite">追加</button>
-  <div style="margin-top:10px;">
-    <button id="exportSettings">設定をエクスポート</button>
-  </div>
-
+  <div class="import-desc">URL をドラッグして追加できます</div>
+</div>
+  <h3>設定のインポート/エクスポート</h3>
   <div id="dropArea" class="drop-area" style="margin-top:10px;">
     <input type="file" id="importSettings" accept="application/json" style="display:none">
     <button id="importButton">設定をインポート</button>
+    <button id="exportSettings">設定をエクスポート</button>
     <div class="import-desc">クリックまたは JSON ファイルをドラッグしてインポート</div>
   </div>
 
@@ -287,6 +323,26 @@ input[type="number"]::-webkit-outer-spin-button {
 const defaultSites = [
   { name: "GIGAZINE", rss: "https://gigazine.net/", limit: 10 }
 ];
+
+function showToast(message, duration = 2000) {
+  const container = document.getElementById("toastContainer");
+
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+
+  container.appendChild(toast);
+
+  // 指定時間後にフェードアウト
+  setTimeout(() => {
+    toast.classList.add("fade-out");
+
+    // フェードアウト後に DOM から削除
+    setTimeout(() => {
+      toast.remove();
+    }, 800); // CSS の transition と合わせる
+  }, duration);
+}
 
 // ▼ localStorage から読み込み
 let settings = JSON.parse(localStorage.getItem("rss_settings")) || {
@@ -320,38 +376,113 @@ function applyBulkLimit() {
 
 document.getElementById("saveSettings").onclick = applyBulkLimit;
 
+/**
+ * 汎用ドロップエリア初期化
+ * @param {HTMLElement} area - ドロップエリアの要素
+ * @param {Function} onDropData - ドロップ時の処理（引数に data を渡す）
+ * @param {Function} canHighlight - ハイライトしてよいか判定する関数
+ */
+function setupDropArea(area, onDropData, canHighlight) {
+
+  area.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    const items = e.dataTransfer.items;
+
+    if (items && items.length > 0 && canHighlight(items[0])) {
+      area.classList.add("dragover");
+    }
+  });
+
+  area.addEventListener("dragleave", () => {
+    area.classList.remove("dragover");
+  });
+
+  area.addEventListener("drop", (e) => {
+    e.preventDefault();
+    area.classList.remove("dragover");
+
+    onDropData(e);
+  });
+}
+setupDropArea(
+  document.getElementById("dropArea"),
+  (e) => {
+    const dt = e.dataTransfer;
+    if (!dt.files || dt.files.length === 0) return;
+
+    const ok = confirm("設定をインポートしますか？");
+    if (!ok) return;
+
+    importFromFile(dt.files[0]);
+  },
+  (item) => item.kind === "file"
+);
+setupDropArea(
+  document.getElementById("urlDropArea"),
+  async (e) => {
+    const text = e.dataTransfer.getData("text");
+    if (!text) return;
+
+    document.getElementById("newSiteUrl").value = text;
+
+    const result = await addSiteCore(text);
+
+    if (result.ok) {
+      showToast(`${result.name} を追加しました`);
+      return;
+    }
+
+    // ▼ 失敗時の詳細メッセージ
+    switch (result.reason) {
+      case "duplicate":
+        showToast("このサイトはすでに登録されています");
+        break;
+
+      case "fetch-failed":
+        showToast("RSS を取得できませんでした（アクセス不可）");
+        break;
+
+      case "invalid-rss":
+        showToast("RSS の形式が不正です（item/entry が見つかりません）");
+        break;
+
+      default:
+        showToast("追加に失敗しました");
+        break;
+    }
+  },
+  (item) => item.kind === "string"
+);
+
+
+
 // ▼ サイト追加
-document.getElementById("addSite").onclick = async () => {
-  let name = document.getElementById("newSiteName").value;
-  const url = document.getElementById("newSiteUrl").value;
+async function addSiteCore(url, name = "") {
+  if (!url) return { ok: false, reason: "no-url" };
 
-  if (!url) {
-    alert("URL を入力してください");
-    return;
-  }
-
+  // 重複チェック
   if (settings.sites.some(s => s.rss === url)) {
-    alert("このサイトはすでに登録されています");
-    return;
+    return { ok: false, reason: "duplicate" };
   }
 
+  // RSS 取得
   const result = await fetchAndValidateRSS(url);
   if (!result.ok) {
-    alert("RSS を取得できませんでした");
-    return;
+    return { ok: false, reason: "fetch-failed" };
   }
 
+  // XML 判定
   const xml = new DOMParser().parseFromString(result.xml, "application/xml");
   const isValid =
     xml.querySelector("item") ||
     xml.querySelector("entry") ||
     xml.querySelector("rdf\\:li");
 
-  if (!isValid) {
-    alert("RSS を取得できませんでした");
-    return;
+  if (!isValid) { 
+    return { ok: false, reason: "invalid-rss" };
   }
 
+  // 名前自動取得
   if (!name) {
     name =
       xml.querySelector("title")?.textContent?.trim() ||
@@ -360,13 +491,36 @@ document.getElementById("addSite").onclick = async () => {
       "名称未設定サイト";
   }
 
+  // 追加
   settings.sites.unshift({ name, rss: url, limit: settings.limit });
-  document.getElementById("newSiteUrl").value = "";
-  document.getElementById("newSiteName").value = "";
   saveSettings();
   main();
-  alert("サイトを追加しました");
+
+  return { ok: true, name: String(name), url };
+}
+document.getElementById("addSite").onclick = async () => {
+  const name = document.getElementById("newSiteName").value;
+  const url = document.getElementById("newSiteUrl").value;
+
+  if (!url) {
+    showToast("URL を入力してください");
+    return;
+  }
+
+  const result = await addSiteCore(url, name);
+
+  if (!result.ok) {
+    if (result.reason === "duplicate") showToast("このサイトはすでに登録されています");
+    else showToast("RSS を取得できませんでした");
+    return;
+  }
+
+  // 成功時
+  document.getElementById("newSiteUrl").value = "";
+  document.getElementById("newSiteName").value = "";
+  showToast(`${result.name}を追加しました`);
 };
+
 /* ============================
    並び替えモード
 ============================ */
@@ -398,48 +552,6 @@ document.getElementById("exportSettings").onclick = () => {
 
   URL.revokeObjectURL(url);
 };
-
-// ▼ インポート
-const dropArea = document.getElementById("dropArea");
-const importButton = document.getElementById("importButton");
-const importInput = document.getElementById("importSettings");
-
-// ▼ クリックでファイル選択
-importButton.onclick = () => importInput.click();
-importInput.onchange = () => {
-  if (importInput.files[0]) importFromFile(importInput.files[0]);
-};
-
-// ▼ ドラッグオーバー（ファイルだけハイライト）
-dropArea.addEventListener("dragover", (e) => {
-  e.preventDefault();
-
-  const items = e.dataTransfer.items;
-  if (items && items.length > 0 && items[0].kind === "file") {
-    dropArea.classList.add("dragover");
-  }
-});
-
-// ▼ ドラッグ離脱
-dropArea.addEventListener("dragleave", () => {
-  dropArea.classList.remove("dragover");
-});
-
-// ▼ ドロップ処理
-dropArea.addEventListener("drop", (e) => {
-  e.preventDefault();
-  dropArea.classList.remove("dragover");
-
-  const dt = e.dataTransfer;
-
-  if (!dt.files || dt.files.length === 0) {
-    return;
-  }
-  const ok = confirm("設定をインポートしますか？");
-  if (!ok) return;
-  importFromFile(dt.files[0]);
-});
-
 
 function importFromFile(file) {
   const reader = new FileReader();
@@ -506,77 +618,6 @@ function importFromFile(file) {
   reader.readAsText(file);
 }
 
-
-//ドラッグURL
-const urlInput = document.getElementById("newSiteUrl");
-
-urlInput.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  urlInput.classList.add("dragover");
-});
-
-urlInput.addEventListener("dragleave", () => {
-  urlInput.classList.remove("dragover");
-});
-
-urlInput.addEventListener("drop", async (e) => {
-  e.preventDefault();
-  urlInput.classList.remove("dragover");
-
-  const url = e.dataTransfer.getData("text/uri-list") ||
-              e.dataTransfer.getData("text/plain");
-
-  if (!url) {
-    alert("URL を取得できませんでした");
-    return;
-  }
-
-  // 入力欄に反映
-  urlInput.value = url;
-
-  // そのまま追加処理へ
-  await addSiteFromUrl(url);
-});
-async function addSiteFromUrl(url, name = "") {
-  if (!url) return false;
-  document.getElementById("newSiteUrl").value = "";
-  document.getElementById("newSiteName").value = "";
-  if (settings.sites.some(s => s.rss === url)) {
-    alert("このサイトはすでに登録されています");
-    return false;
-  }
-
-  const result = await fetchAndValidateRSS(url);
-  if (!result.ok) {
-    alert("RSS を取得できませんでした");
-    return false;
-  }
-
-  const xml = new DOMParser().parseFromString(result.xml, "application/xml");
-  const isValid =
-    xml.querySelector("item") ||
-    xml.querySelector("entry") ||
-    xml.querySelector("rdf\\:li");
-
-  if (!isValid) {
-    alert("RSS を取得できませんでした");
-    return false;
-  }
-
-  if (!name) {
-    name =
-      xml.querySelector("title")?.textContent?.trim() ||
-      xml.querySelector("channel > title")?.textContent?.trim() ||
-      xml.querySelector("feed > title")?.textContent?.trim() ||
-      "名称未設定サイト";
-  }
-
-  settings.sites.unshift({ name, rss: url, limit: settings.limit });
-  saveSettings();
-  main();
-  return true;
-}
-
 // ▼ リセット
 document.getElementById("resetSettings").onclick = () => {
   const ok = confirm("設定を初期化します。よろしいですか？\n（登録したサイトはすべて削除されます）");
@@ -633,10 +674,21 @@ async function fetchAndValidateRSS(url) {
 }
 // ▼ 個別 limit 更新
 function updateSiteLimit(index, value) {
-  settings.sites[index].limit = Number(value);
+  const site = settings.sites[index];
+
+  const min = 1;
+  const max = site._maxItems ?? site.limit ?? 1;
+
+  let v = Number(value);
+  if (v < min) v = min;
+  if (v > max) v = max;
+
+  site.limit = v;
+
   localStorage.setItem("rss_settings", JSON.stringify(settings));
   main();
 }
+
 
 //タイトル編集
 document.addEventListener("click", (e) => {
@@ -757,7 +809,6 @@ function enableMouseSort(container, onSorted) {
       dragging = null;
 
       onSorted();
-      renderSortMode(); // 並び替えモードの再描画
       document.removeEventListener("pointermove", move);
       document.removeEventListener("pointerup", up);
     };
@@ -771,7 +822,12 @@ function enableMouseSort(container, onSorted) {
 /* ============================
    並び替えモードの描画
 ============================ */
-function renderSortMode() {
+function renderSortMode_() {
+  settings.sites.forEach(s => {
+  if (s.items) {
+    s._maxItems = s.items.length;
+  }
+  });
   const box = document.getElementById("sites");
   box.innerHTML = "<h2>サイトの順番を変更</h2>";
 
@@ -805,6 +861,62 @@ function renderSortMode() {
           </div>
         </div>
         <button class="deleteBtn" onclick="deleteSite(${i})">✕</button>
+      `;
+    }
+
+    list.appendChild(row);
+  });
+
+  box.appendChild(list);
+
+  enableMouseSort(list, () => {
+    const items = [...list.querySelectorAll(".draggable")];
+    const newOrder = items.map(item => {
+      const oldIndex = Number(item.dataset.index);
+      return settings.sites[oldIndex];
+    });
+    settings.sites = newOrder;
+
+    items.forEach((item, idx) => item.dataset.index = idx);
+
+    saveSettings();
+  });
+}
+function renderSortMode() {
+  const box = document.getElementById("sites");
+  box.innerHTML = "<h2>サイトの順番を変更</h2>";
+
+  const list = document.createElement("div");
+  list.id = "sortList";
+
+  settings.sites.forEach((s, i) => {
+    const row = document.createElement("div");
+    row.className = "draggable";
+    row.dataset.index = i;
+
+    if (s.error) {
+      row.innerHTML = `
+        <strong class="sortTitle">≡ ${s.name}</strong>
+        <button class="edit-title">✎</button>
+        <div class="errorWrapper">　</div>
+        <button class="deleteBtn"
+          onclick="deleteSite(this.closest('.draggable').dataset.index)">✕</button>
+      `;
+    } else {
+      row.innerHTML = `
+        <strong class="sortTitle">≡ ${s.name}</strong>
+        <button class="edit-title">✎</button>
+        <div class="numberWrapper">
+          <input type="number" class="limitInput"
+            value="${s.limit}" min="1" max="${s._maxItems}"
+            onchange="updateSiteLimit(this.closest('.draggable').dataset.index, this.value)">
+          <div class="customSpinner">
+            <button data-dir="up">▲</button>
+            <button data-dir="down">▼</button>
+          </div>
+        </div>
+        <button class="deleteBtn"
+          onclick="deleteSite(this.closest('.draggable').dataset.index)">✕</button>
       `;
     }
 
@@ -948,22 +1060,26 @@ function deleteSite(index) {
   main();
 }
 function attachCustomSpinnerEvents() {
-  // ▲▼ ボタンで数値変更
   document.querySelectorAll(".customSpinner button").forEach(btn => {
     btn.addEventListener("click", e => {
       const dir = e.target.dataset.dir;
       const wrapper = e.target.closest(".numberWrapper");
       const input = wrapper.querySelector(".limitInput");
 
+      const min = Number(input.min) || 1;
+      const max = Number(input.max) || Infinity;
+
       let val = Number(input.value);
-      if (dir === "up") val++;
-      if (dir === "down") val--;
+
+      if (dir === "up") val = Math.min(val + 1, max);
+      if (dir === "down") val = Math.max(val - 1, min);
 
       input.value = val;
       input.dispatchEvent(new Event("change"));
     });
   });
 }
+
 
 // ▼ メイン
 async function main() {
