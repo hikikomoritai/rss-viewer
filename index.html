@@ -186,7 +186,16 @@ input[type="number"]::-webkit-outer-spin-button {
   cursor: pointer;
   font-size: 16px;
 }
-
+.edit-title {
+  top: 10px;
+  padding: 4px 6px;
+  font-size: 16px;
+  background: #444;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+}
 .deleteBtn:hover {
   background: #dc2626;
 }
@@ -596,8 +605,8 @@ toggleBtn.onclick = () => {
 
 // ▼ Cloudflare Worker
 async function fetchViaCloudflare(url) {
-  //const api = "http://localhost:8787/?url=";
-  const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?url=";
+  const api = "http://localhost:8787/?url=";
+  //const api = "https://rss-proxy.watashigyuudondesu.workers.dev/?url=";
   const res = await fetch(api + encodeURIComponent(url));
   return await res.text();
 }
@@ -629,6 +638,39 @@ function updateSiteLimit(index, value) {
   main();
 }
 
+//タイトル編集
+document.addEventListener("click", (e) => {
+  if (!e.target.classList.contains("edit-title")) return;
+
+  // ▼ 通常モード（h2 a）
+  let titleEl = e.target.closest(".siteHeader")?.querySelector("h2 a");
+
+  // ▼ 並び替えモード（strong.sortTitle）
+  if (!titleEl) {
+    titleEl = e.target.closest("div")?.querySelector(".sortTitle");
+  }
+
+  if (!titleEl) return;
+
+  const current = titleEl.textContent.replace(/^≡\s*/, "");
+  const newTitle = prompt("タイトルを編集", current);
+
+  if (newTitle && newTitle.trim() !== "") {
+    const clean = newTitle.trim();
+
+    // ▼ 表示を更新
+    if (titleEl.classList.contains("sortTitle")) {
+      titleEl.textContent = `≡ ${clean}`;
+    } else {
+      titleEl.textContent = clean;
+    }
+
+    // ▼ settings.sites にも保存
+    const index = [...document.querySelectorAll(".edit-title")].indexOf(e.target);
+    settings.sites[index].name = clean;
+    localStorage.setItem("rss_settings", JSON.stringify(settings));
+  }
+});
 
 /* ============================
    マウスドラッグ並び替え
@@ -642,18 +684,20 @@ function enableMouseSort(container, onSorted) {
   let offsetY = 0;
 
   container.addEventListener("pointerdown", e => {
-    if (e.target.classList.contains("deleteBtn")) {
+    const ignoreSelectors = [
+      ".deleteBtn",
+      ".limitInput",
+      ".customSpinner",
+      ".customSpinner *",
+      ".edit-title",
+      ".edit-title *"
+    ];
+
+    if (ignoreSelectors.some(sel => e.target.matches(sel))) {
       e.stopPropagation();
       return;
     }
-    if (e.target.classList.contains("limitInput")) {
-      e.stopPropagation();
-      return;
-    }
-    if (e.target.matches(".customSpinner, .customSpinner *")) {
-      e.stopPropagation();
-      return;
-    }
+
     const target = e.target.closest(".draggable");
     if (!target) return;
 
@@ -743,12 +787,14 @@ function renderSortMode() {
     if (s.error) {
       row.innerHTML = `
         <strong class="sortTitle">≡ ${s.name}</strong>
+        <button class="edit-title">✎</button>
         <div class="errorWrapper">　</div>
         <button class="deleteBtn" onclick="deleteSite(${i})">✕</button>
       `;
     } else {
       row.innerHTML = `
         <strong class="sortTitle">≡ ${s.name}</strong>
+        <button class="edit-title">✎</button>
         <div class="numberWrapper">
           <input type="number" class="limitInput"
             value="${s.limit}" min="1" max="${s._maxItems}"
@@ -795,6 +841,7 @@ async function loadLatest(site, index) {
           <h2>
             <a href="${site.rss.replace(/\/[^/]*$/, "")}" target="_blank">${site.name}</a>
           </h2>
+          <button class="edit-title">✎</button>
           <button class="deleteBtn" onclick="deleteSite(${index})">✕</button>
         </div>
         取得できませんでした。
@@ -853,6 +900,7 @@ async function loadLatest(site, index) {
         <h2>
           <a href="${site.rss.replace(/\/[^/]*$/, "")}" target="_blank">${site.name}</a>
         </h2>
+        <button class="edit-title">✎</button>
         <div class="numberWrapper">
           <input type="number" class="limitInput"
             value="${site.limit}" min="1" max="${site._maxItems}"
