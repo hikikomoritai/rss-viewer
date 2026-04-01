@@ -522,18 +522,31 @@ document.getElementById("exportSettings").onclick = () => {
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
 
-  // ★ 日付を付けたファイル名を生成
+  // 1. デフォルトの日付入りファイル名を生成
   const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const dd = String(now.getDate()).padStart(2, "0");
   const hh = String(now.getHours()).padStart(2, "0");
   const mi = String(now.getMinutes()).padStart(2, "0");
-  const fileName = `rss-settings-${yyyy}${mm}${dd}-${hh}${mi}.json`;
+  const defaultFileName = `rss-settings-${yyyy}${mm}${dd}-${hh}${mi}`;
 
+  // 2. ユーザーにファイル名の入力を求める
+  let userInput = window.prompt("保存するファイル名を入力してください（空欄なら日付が入ります）", "");
+
+  // 3. ファイル名の決定ロジック
+  // 入力がnull（キャンセル）または空文字ならデフォルト名を採用
+  let finalFileName = (userInput && userInput.trim() !== "") ? userInput.trim() : defaultFileName;
+
+  // 拡張子 .json が付いていなければ強制的に付与する
+  if (!finalFileName.toLowerCase().endsWith(".json")) {
+    finalFileName += ".json";
+  }
+
+  // 4. ダウンロード処理
   const a = document.createElement("a");
   a.href = url;
-  a.download = fileName;   // ★ ここに日付入りファイル名をセット
+  a.download = finalFileName;
   a.click();
 
   URL.revokeObjectURL(url);
