@@ -84,23 +84,30 @@ button {
   cursor: pointer;
   font-size: 14px;
 }
-button:hover {
-  background: #2563eb;
-}
-button:active {
-  background: #456bd4;
-}
-
+button:hover { filter: brightness(1.2); }
+button:active { filter: brightness(0.8); }
 .deleteBtn {
   position: absolute;
   top: 10px;
   right: 10px;
   background: #a12f2f;
+  
+  /* 正方形にする設定 */
+  width: 30px;      /* 任意のサイズ（お好みで調整してください） */
+  height: 30px;
+  padding: 0;        /* 文字による自動伸縮を防ぐ */
+  border: none;
+  border-radius: 6px; /* 少し角を丸くするときれい */
+  
+  /* 中の「✕」をど真ん中に配置 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  color: white;
+  cursor: pointer;
+  line-height: 1;    /* 文字の高さによるズレを防止 */
 }
-.deleteBtn:hover {
-  background: #dc2626;
-}
-
 .edit-title {
   padding: 4px 6px;
   font-size: 16px;
@@ -135,6 +142,9 @@ select:focus {
   width: 40px;
   text-align: center;
   padding: 6px 1px;
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* 標準の ▲▼ を消す */
@@ -175,29 +185,75 @@ input[type="number"]::-webkit-outer-spin-button {
 /* ===========================
    並び替えモード
 =========================== */
-.draggable {
-  cursor: grab;
-  padding: 8px;
-  border: 1px solid #444;
-  margin-bottom: 6px;
-  background: #1f2937;
-  border-radius: 6px;
-  position: relative;
-  touch-action: none;
-}
-.dragging {
-  opacity: 0.5;
-}
-.placeholder {
-  background: #333;
-  border: 1px dashed #666;
-  border-radius: 6px;
-  padding: 6px;
-  margin-bottom: 6px;
+#sortList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* 左寄せにして右側を空ける */
 }
 
-.sortTitle {
-  font-size: 20px;
+.draggable {
+  width: 70%; 
+  min-width: 300px; 
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  padding: 10px;
+  margin-bottom: 30px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  touch-action: none; /* スマホでのスクロール干渉防止 */
+  position: relative;
+  cursor: grab;
+  -webkit-user-select: none; /* Safari用 */
+  user-select: none;         /* 標準 */
+  -webkit-touch-callout: none; /* iOSでの長押しメニューを無効化 */
+}
+
+/* ドラッグ中のスタイル（色変化のみ） */
+.draggable.dragging {
+  background-color: #2d3748 !important;
+  border-color: #4a5568 !important;
+  opacity: 1;
+  z-index: 1000;
+  pointer-events: none; /* 下の要素が反応できるようにする */
+}
+
+/* 並べ替え行の構成 */
+.sort-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+}
+
+/* タイトルと編集・件数をまとめるエリア */
+.sort-main-content {
+  flex: 1;
+  line-height: 1.5;
+  color: #e0e0e0;
+  word-break: break-all;
+}
+
+/* ボタンやスピナーのインライン配置 */
+.inline-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.handle-icon {
+  color: #666;
+  margin-right: 5px;
+  user-select: none;
+}
+
+.placeholder {
+  background: #111;
+  border: 1px dashed #444;
+  border-radius: 8px;
+  margin-bottom: 30px;
 }
 
 /* ===========================
@@ -304,7 +360,7 @@ input[type="number"]::-webkit-outer-spin-button {
     <input type="file" id="importSettings" accept="application/json" style="display:none">
     <button id="importButton">設定をインポート</button>
     <button id="exportSettings">設定をエクスポート</button>
-    <div class="import-desc">ボタンをクリックまたは JSON ファイルをドラッグしてインポート</div>
+    <div class="import-desc">クリックまたは JSON ファイルをドラッグしてインポート</div>
   </div>
 
   <div style="margin-top:10px;">
@@ -522,31 +578,18 @@ document.getElementById("exportSettings").onclick = () => {
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
 
-  // 1. デフォルトの日付入りファイル名を生成
+  // ★ 日付を付けたファイル名を生成
   const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const dd = String(now.getDate()).padStart(2, "0");
   const hh = String(now.getHours()).padStart(2, "0");
   const mi = String(now.getMinutes()).padStart(2, "0");
-  const defaultFileName = `rss-settings-${yyyy}${mm}${dd}-${hh}${mi}`;
+  const fileName = `rss-settings-${yyyy}${mm}${dd}-${hh}${mi}.json`;
 
-  // 2. ユーザーにファイル名の入力を求める
-  let userInput = window.prompt("保存するファイル名を入力してください（空欄なら日付が入ります）", "");
-
-  // 3. ファイル名の決定ロジック
-  // 入力がnull（キャンセル）または空文字ならデフォルト名を採用
-  let finalFileName = (userInput && userInput.trim() !== "") ? userInput.trim() : defaultFileName;
-
-  // 拡張子 .json が付いていなければ強制的に付与する
-  if (!finalFileName.toLowerCase().endsWith(".json")) {
-    finalFileName += ".json";
-  }
-
-  // 4. ダウンロード処理
   const a = document.createElement("a");
   a.href = url;
-  a.download = finalFileName;
+  a.download = fileName;   // ★ ここに日付入りファイル名をセット
   a.click();
 
   URL.revokeObjectURL(url);
@@ -696,39 +739,19 @@ function updateSiteLimit(index, value) {
   main();
 }
 
-//タイトル編集
-document.addEventListener("click", (e) => {
-  if (!e.target.classList.contains("edit-title")) return;
+// タイトル編集ボタンから直接呼ばれる関数
+function editTitle(index) {
+  const site = settings.sites[index];
+  if (!site) return;
 
-  // ▼ 通常モード（h2 a）
-  let titleEl = e.target.closest(".siteHeader")?.querySelector("h2 a");
-
-  // ▼ 並び替えモード（strong.sortTitle）
-  if (!titleEl) {
-    titleEl = e.target.closest("div")?.querySelector(".sortTitle");
-  }
-
-  if (!titleEl) return;
-
-  const current = titleEl.textContent.replace(/^≡\s*/, "");
-  const newTitle = prompt("タイトルを編集", current);
+  const newTitle = prompt("タイトルを編集", site.name);
 
   if (newTitle && newTitle.trim() !== "") {
-    const clean = newTitle.trim();
-
-    // ▼ 表示を更新
-    if (titleEl.classList.contains("sortTitle")) {
-      titleEl.textContent = `≡ ${clean}`;
-    } else {
-      titleEl.textContent = clean;
-    }
-
-    // ▼ settings.sites にも保存
-    const index = [...document.querySelectorAll(".edit-title")].indexOf(e.target);
-    settings.sites[index].name = clean;
-    localStorage.setItem("rss_settings", JSON.stringify(settings));
+    site.name = newTitle.trim();
+    saveSettings();
+    main(); // 再描画して反映
   }
-});
+}
 
 /* ============================
    マウスドラッグ並び替え
@@ -737,53 +760,56 @@ function enableMouseSort(container, onSorted) {
   let dragging = null;
   let placeholder = document.createElement("div");
   placeholder.className = "placeholder";
-  placeholder.style.height = "40px";
 
+  let offsetX = 0;
   let offsetY = 0;
 
-  container.addEventListener("pointerdown", e => {
-    const ignoreSelectors = [
-      ".deleteBtn",
-      ".limitInput",
-      ".customSpinner",
-      ".customSpinner *",
-      ".edit-title",
-      ".edit-title *"
-    ];
-
-    if (ignoreSelectors.some(sel => e.target.matches(sel))) {
-      e.stopPropagation();
-      return;
-    }
+  container.onpointerdown = e => {
+    // すでに他の指でドラッグ中、またはボタン・入力欄の上なら無視
+    if (dragging) return;
+    const ignoreSelectors = [".deleteBtn", ".limitInput", ".customSpinner", ".customSpinner *", ".edit-title", ".edit-title *"];
+    if (ignoreSelectors.some(sel => e.target.matches(sel))) return;
 
     const target = e.target.closest(".draggable");
     if (!target) return;
 
+    // 即座にドラッグ開始
     dragging = target;
     dragging.setPointerCapture(e.pointerId);
 
-    const rect = dragging.getBoundingClientRect();
-    offsetY = e.clientY - rect.top;
+    // テキスト選択を禁止するクラスを付与
+    document.body.classList.add("sorting-active");
 
-    // 浮かせる
+    const rect = dragging.getBoundingClientRect();
+    const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+    // 掴んだ場所のオフセットを計算
+    offsetX = e.pageX - (rect.left + scrollX);
+    offsetY = e.pageY - (rect.top + scrollY);
+
+    // プレースホルダーの準備
+    placeholder.style.height = rect.height + "px";
+    placeholder.style.width = rect.width + "px";
+    placeholder.style.marginBottom = window.getComputedStyle(dragging).marginBottom;
+
+    // ドラッグ中のスタイル設定
+    dragging.classList.add("dragging");
     dragging.style.position = "absolute";
     dragging.style.width = rect.width + "px";
-    dragging.style.zIndex = 1000;
-    dragging.classList.add("dragging");
+    dragging.style.zIndex = "1000";
+    
+    // 即座に位置を反映
+    dragging.style.left = (e.pageX - offsetX) + "px";
+    dragging.style.top = (e.pageY - offsetY) + "px";
 
-    // placeholder を置く
-    dragging.parentNode.insertBefore(placeholder, dragging.nextSibling);
-
-    moveAt(e.pageY);
-
-    function moveAt(pageY) {
-      dragging.style.top = pageY - offsetY + "px";
-      dragging.style.left = rect.left + "px";
-    }
+    container.insertBefore(placeholder, dragging.nextSibling);
 
     const move = e2 => {
-      if (!dragging) return;
-      moveAt(e2.pageY);
+      if (!dragging || e2.pointerId !== e.pointerId) return;
+
+      dragging.style.left = (e2.pageX - offsetX) + "px";
+      dragging.style.top = (e2.pageY - offsetY) + "px";
 
       const items = [...container.querySelectorAll(".draggable:not(.dragging)")];
       const y = e2.clientY;
@@ -798,30 +824,26 @@ function enableMouseSort(container, onSorted) {
     };
 
     const up = e2 => {
-      if (!dragging) return;
-
+      if (!dragging || e2.pointerId !== e.pointerId) return;
+      
       dragging.releasePointerCapture(e2.pointerId);
+      document.body.classList.remove("sorting-active");
 
-      dragging.style.position = "";
-      dragging.style.top = "";
-      dragging.style.left = "";
-      dragging.style.width = "";
-      dragging.style.zIndex = "";
       dragging.classList.remove("dragging");
-
+      dragging.style.cssText = ""; 
       container.insertBefore(dragging, placeholder);
       placeholder.remove();
 
       dragging = null;
+      if (onSorted) onSorted();
 
-      onSorted();
       document.removeEventListener("pointermove", move);
       document.removeEventListener("pointerup", up);
     };
 
     document.addEventListener("pointermove", move);
     document.addEventListener("pointerup", up);
-  });
+  };
 }
 /* ============================
    並び替えモード
@@ -834,66 +856,6 @@ document.getElementById("toggleSort").onclick = () => {
 /* ============================
    並び替えモードの描画
 ============================ */
-function renderSortMode_() {
-  settings.sites.forEach(s => {
-  if (s.items) {
-    s._maxItems = s.items.length;
-  }
-  });
-  const box = document.getElementById("sites");
-  box.innerHTML = "<h2>サイトの順番を変更</h2>";
-
-  const list = document.createElement("div");
-  list.id = "sortList";
-
-  settings.sites.forEach((s, i) => {
-
-    const row = document.createElement("div");
-    row.className = "draggable";
-    row.dataset.index = i;
-
-    if (s.error) {
-      row.innerHTML = `
-        <strong class="sortTitle">≡ ${s.name}</strong>
-        <button class="edit-title">✎</button>
-        <div class="errorWrapper">　</div>
-        <button class="deleteBtn" onclick="deleteSite(${i})">✕</button>
-      `;
-    } else {
-      row.innerHTML = `
-        <strong class="sortTitle">≡ ${s.name}</strong>
-        <button class="edit-title">✎</button>
-        <div class="numberWrapper">
-          <input type="number" class="limitInput"
-            value="${s.limit}" min="1" max="${s._maxItems}"
-            onchange="updateSiteLimit(${i}, this.value)">
-          <div class="customSpinner">
-            <button data-dir="up">▲</button>
-            <button data-dir="down">▼</button>
-          </div>
-        </div>
-        <button class="deleteBtn" onclick="deleteSite(${i})">✕</button>
-      `;
-    }
-
-    list.appendChild(row);
-  });
-
-  box.appendChild(list);
-
-  enableMouseSort(list, () => {
-    const items = [...list.querySelectorAll(".draggable")];
-    const newOrder = items.map(item => {
-      const oldIndex = Number(item.dataset.index);
-      return settings.sites[oldIndex];
-    });
-    settings.sites = newOrder;
-
-    items.forEach((item, idx) => item.dataset.index = idx);
-
-    saveSettings();
-  });
-}
 function renderSortMode() {
   const box = document.getElementById("sites");
   box.innerHTML = "<h2>サイトの順番を変更</h2>";
@@ -906,18 +868,20 @@ function renderSortMode() {
     row.className = "draggable";
     row.dataset.index = i;
 
+    // ✎ボタンに onclick="editTitle(${i})" を追加
+    const editBtnHtml = `<button class="edit-title" onclick="editTitle(${i})">✎</button>`;
+
     if (s.error) {
       row.innerHTML = `
         <strong class="sortTitle">≡ ${s.name}</strong>
-        <button class="edit-title">✎</button>
+        ${editBtnHtml}
         <div class="errorWrapper">　</div>
-        <button class="deleteBtn"
-          onclick="deleteSite(this.closest('.draggable').dataset.index)">✕</button>
+        <button class="deleteBtn" onclick="deleteSite(this.closest('.draggable').dataset.index)">✕</button>
       `;
     } else {
       row.innerHTML = `
         <strong class="sortTitle">≡ ${s.name}</strong>
-        <button class="edit-title">✎</button>
+        ${editBtnHtml}
         <div class="numberWrapper">
           <input type="number" class="limitInput"
             value="${s.limit}" min="1" max="${s._maxItems}"
@@ -927,11 +891,9 @@ function renderSortMode() {
             <button data-dir="down">▼</button>
           </div>
         </div>
-        <button class="deleteBtn"
-          onclick="deleteSite(this.closest('.draggable').dataset.index)">✕</button>
+        <button class="deleteBtn" onclick="deleteSite(this.closest('.draggable').dataset.index)">✕</button>
       `;
     }
-
     list.appendChild(row);
   });
 
@@ -939,20 +901,11 @@ function renderSortMode() {
 
   enableMouseSort(list, () => {
     const items = [...list.querySelectorAll(".draggable")];
-    const newOrder = items.map(item => {
-      const oldIndex = Number(item.dataset.index);
-      return settings.sites[oldIndex];
-    });
-
-    settings.sites = newOrder;
-
-    items.forEach((item, idx) => item.dataset.index = idx);
-
+    settings.sites = items.map(item => settings.sites[Number(item.dataset.index)]);
     saveSettings();
+    items.forEach((item, idx) => item.dataset.index = idx);
   });
 }
-
-
 // ▼ RSS 読み込み
 async function loadLatest(site, index) {
   const result = await fetchAndValidateRSS(site.rss);
@@ -1024,7 +977,7 @@ async function loadLatest(site, index) {
         <h2>
           <a href="${site.rss.replace(/\/[^/]*$/, "")}" target="_blank">${site.name}</a>
         </h2>
-        <button class="edit-title">✎</button>
+        <button class="edit-title" onclick="editTitle(${index})">✎</button>
         <div class="numberWrapper">
           <input type="number" class="limitInput"
             value="${site.limit}" min="1" max="${site._maxItems}"
