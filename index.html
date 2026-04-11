@@ -3,21 +3,74 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>まとめサイト 最新記事一覧（カスタム版）</title>
+<title>まとめサイト 最新記事一覧</title>
 <style>
+/* ===========================
+   カラーテーマ定義
+=========================== */
+:root {
+  /* デフォルト：ダーク（青系） */
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --text-color: #e0e0e0;
+  --accent-color: #224a8b;    /* ボタン等のメイン色 */
+  --link-color: #90caf9;
+  --title-color: #4488ff;
+  --border-color: #333;
+  --input-bg: #303030;
+  --input-border: #4b5563;
+  --toast-bg: #333;
+}
+
+/* 緑系テーマ */
+body.theme-green {
+  --accent-color: #2e7d32;
+  --link-color: #a5d6a7;
+  --title-color: #44ff88;
+}
+
+/* 赤系テーマ */
+body.theme-red {
+  --accent-color: #8b2222;
+  --link-color: #ef9a9a;
+  --title-color: #ff4488;
+}
+
+/* ライトモード */
+body.theme-light {
+  --bg-color: #f8f9fa;      /* ほんのりグレーで眩しさを軽減 */
+  --card-bg: #ffffff;
+  --text-color: #2c3e50;    /* 真っ黒ではなく濃い紺グレーで柔らかく */
+  --accent-color: #3182ce;  /* 清潔感のあるブルー */
+  --link-color: #2b6cb0;
+  --title-color: #2d3748;   /* タイトルは落ち着いた色に */
+  --border-color: #e2e8f0;  /* 境界線はより薄く、存在感を抑える */
+  --input-bg: #ffffff;
+  --input-border: #cbd5e0;
+  --toast-bg: #2d3748;
+}
+
 /* ===========================
    基本テーマ
 =========================== */
 body {
   font-family: sans-serif;
   margin: 20px;
-  background-color: #121212;
-  color: #e0e0e0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ドラッグ中の拡大鏡/選択防止 */
+.sorting-active {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  touch-action: none !important;
 }
 
 h1 {
   font-size: 24px;
-  color: #ffffff;
+  color: var(--text-color);
 }
 
 /* ===========================
@@ -25,10 +78,10 @@ h1 {
 =========================== */
 .site,
 #settingsBox {
-  background: #1e1e1e;
+  background: var(--card-bg);
   padding: 15px;
   border-radius: 8px;
-  border: 1px solid #333;
+  border: 1px solid var(--border-color);
   margin-bottom: 20px;
 }
 
@@ -36,7 +89,7 @@ h1 {
    サイトカード
 =========================== */
 .site {
-  position: relative; /* ← ✕ ボタンのために必須 */
+  position: relative;
 }
 
 .siteHeader {
@@ -53,7 +106,7 @@ h1 {
 }
 
 .site h2 a {
-  color: #80cbc4;
+  color: var(--title-color);
   text-decoration: none;
 }
 .site h2 a:hover {
@@ -61,7 +114,7 @@ h1 {
 }
 
 li a {
-  color: #90caf9;
+  color: var(--link-color);
   text-decoration: none;
 }
 li a:hover {
@@ -76,45 +129,38 @@ span.date {
    ボタン
 =========================== */
 button {
-  background: #224a8b;
+  background: var(--accent-color);
   color: white;
   border: none;
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  -webkit-tap-highlight-color: transparent;
 }
+
 button:hover { filter: brightness(1.2); }
 button:active { filter: brightness(0.8); }
+
 .deleteBtn {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #a12f2f;
-  
-  /* 正方形にする設定 */
-  width: 30px;      /* 任意のサイズ（お好みで調整してください） */
+  background: #a12f2f !important; /* 削除はテーマに関わらず赤固定 */
+  width: 30px;
   height: 30px;
-  padding: 0;        /* 文字による自動伸縮を防ぐ */
-  border: none;
-  border-radius: 6px; /* 少し角を丸くするときれい */
-  
-  /* 中の「✕」をど真ん中に配置 */
+  padding: 0;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  color: white;
-  cursor: pointer;
-  line-height: 1;    /* 文字の高さによるズレを防止 */
+  line-height: 1;
 }
+
 .edit-title {
   padding: 4px 6px;
   font-size: 16px;
-  background: #444;
-  border: none;
-  color: #fff;
-  cursor: pointer;
+  background: #444; /* グレー系で固定 */
   border-radius: 4px;
 }
 
@@ -123,9 +169,9 @@ button:active { filter: brightness(0.8); }
 =========================== */
 input,
 select {
-  background: #1f2937;
-  color: #f3f4f6;
-  border: 1px solid #4b5563;
+  background: var(--input-bg);
+  color: var(--text-color);
+  border: 1px solid var(--input-border);
   padding: 6px;
   border-radius: 6px;
   font-size: 16px;
@@ -134,20 +180,16 @@ select {
 input:focus,
 select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 4px #3b82f6;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 4px var(--accent-color);
 }
 
 .limitInput {
   width: 40px;
   text-align: center;
   padding: 6px 1px;
-  -webkit-touch-callout: default;
-  -webkit-user-select: text;
-  user-select: text;
 }
 
-/* 標準の ▲▼ を消す */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -167,10 +209,9 @@ input[type="number"]::-webkit-outer-spin-button {
   display: inline-flex;
   align-items: center;
 }
-
 .customSpinner {
   display: flex;
-  flex-direction: column; /* ← 縦並びを強制 */
+  flex-direction: column;
   margin-left: 4px;
   gap: 2px;
 }
@@ -180,6 +221,9 @@ input[type="number"]::-webkit-outer-spin-button {
   height: 16px;
   font-size: 12px;
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ===========================
@@ -188,110 +232,83 @@ input[type="number"]::-webkit-outer-spin-button {
 #sortList {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* 左寄せにして右側を空ける */
+  align-items: flex-start;
 }
 
 .draggable {
   width: 70%; 
   min-width: 300px; 
-  background-color: #1e1e1e;
-  border: 1px solid #333;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
   padding: 10px;
   margin-bottom: 30px;
   border-radius: 8px;
   box-sizing: border-box;
-  touch-action: none; /* スマホでのスクロール干渉防止 */
+  touch-action: none;
   position: relative;
   cursor: grab;
-  -webkit-user-select: none; /* Safari用 */
-  user-select: none;         /* 標準 */
-  -webkit-touch-callout: none; /* iOSでの長押しメニューを無効化 */
-}
-
-/* ドラッグ中のスタイル（色変化のみ） */
-.draggable.dragging {
-  background-color: #2d3748 !important;
-  border-color: #4a5568 !important;
-  opacity: 1;
-  z-index: 1000;
-  pointer-events: none; /* 下の要素が反応できるようにする */
-}
-
-/* 並べ替え行の構成 */
-.sort-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 10px;
-}
-
-/* タイトルと編集・件数をまとめるエリア */
-.sort-main-content {
-  flex: 1;
-  line-height: 1.5;
-  color: #e0e0e0;
-  word-break: break-all;
-}
-
-/* ボタンやスピナーのインライン配置 */
-.inline-controls {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  vertical-align: middle;
-  margin-left: 8px;
-}
-
-.handle-icon {
-  color: #666;
-  margin-right: 5px;
+  -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.draggable.dragging {
+  background-color: var(--accent-color) !important;
+  opacity: 0.8;
+  z-index: 1000;
+  pointer-events: none;
 }
 
 .placeholder {
-  background: #111;
-  border: 1px dashed #444;
+  background: rgba(128, 128, 128, 0.1);
+  border: 1px dashed var(--border-color);
   border-radius: 8px;
   margin-bottom: 30px;
 }
 
 /* ===========================
-   ドロップエリア（設定インポート）
+   ドロップエリア
 =========================== */
 .drop-area {
   padding: 20px;
-  border: 2px dashed #888;
+  border: 2px dashed var(--input-border);
   border-radius: 8px;
   width: 100%;
   max-width: 500px;
-  background: #1e1e1e; /* ダークUIに合わせる */
+  background: var(--card-bg);
   transition: background 0.2s, border-color 0.2s;
+  text-align: center; /* 中央寄せ追加 */
 }
 
+/* ドラッグオーバー時の色も変数化 */
 .drop-area.dragover {
-  background: #2a2a2a;
-  border-color: #aaa;
+  background: var(--input-bg);
+  border-color: var(--accent-color);
 }
 
 .drop-area .zone-title {
   font-size: 1em;
   margin-bottom: 8px;
-  color: #ccc;
+  /* 文字色をテーマのメインテキストに合わせる */
+  color: var(--text-color); 
+  font-weight: bold;
 }
 
 .drop-area .zone-desc {
   font-size: 0.85em;
-  color: #777;
+  /* 説明文は少し薄くするが、ライトモードでも読める範囲に設定 */
+  color: var(--text-color);
+  opacity: 0.7;
   margin-top: 6px;
 }
 
 .import-desc {
   margin-top: 5px;
   font-size: 0.9em;
-  color: #666;
+  /* 枠外の説明文もテーマに追従 */
+  color: var(--text-color);
+  opacity: 0.6;
 }
-
 /* ===========================
    入力欄サイズ
 =========================== */
@@ -314,19 +331,16 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .toast {
-  background: #333;
+  background: var(--toast-bg);
   color: #fff;
   padding: 10px 16px;
   margin-top: 10px;
   border-radius: 6px;
-  opacity: 1;
-  transition: opacity 0.8s ease;
+  border: 1px solid var(--border-color);
 }
-
 .toast.fade-out {
   opacity: 0;
 }
-
 </style>
 </head>
 <body>
@@ -337,7 +351,17 @@ input[type="number"]::-webkit-outer-spin-button {
 
 <div id="settingsBox">
   <h2>設定</h2>
-
+  <div id="settingsBox">
+    <h3>表示設定</h3>
+    <label>テーマ：
+      <select id="themeSelect" onchange="changeTheme(this.value)">
+        <option value="default">ダーク（青）</option>
+        <option value="theme-green">ダーク（緑）</option>
+        <option value="theme-red">ダーク（赤）</option>
+        <option value="theme-light">ライトモード</option>
+      </select>
+    </label>
+  </div>
   表示件数一括設定：
   <select id="limit">
     <option value="5">5件</option>
@@ -401,11 +425,13 @@ function showToast(message, duration = 2000) {
 // ▼ localStorage から読み込み
 let settings = JSON.parse(localStorage.getItem("rss_settings")) || {
   limit: 10,
-  sites: JSON.parse(JSON.stringify(defaultSites))
+  sites: JSON.parse(JSON.stringify(defaultSites)),
+  theme: 'default'
 };
 
 // ▼ UI に反映
 document.getElementById("limit").value = settings.limit;
+applySavedTheme();
 
 // ▼ 設定保存
 function saveSettings() {
@@ -426,8 +452,33 @@ function applyBulkLimit() {
   saveSettings();
   main(); // 再描画
 }
-
 document.getElementById("saveSettings").onclick = applyBulkLimit;
+
+function changeTheme(themeName) {
+  // 1. bodyに付いている "theme-" で始まるクラスをすべて抽出して削除する
+  const currentClasses = Array.from(document.body.classList);
+  currentClasses.forEach(cls => {
+    if (cls.startsWith('theme-')) {
+      document.body.classList.remove(cls);
+    }
+  });
+
+  // 2. 選択されたテーマが 'default'（青）以外なら、新しいクラスを付与
+  if (themeName && themeName !== 'default') {
+    document.body.classList.add(themeName);
+  }
+
+  // 3. 設定を保存して永続化（既存の保存処理）
+  settings.theme = themeName;
+  saveSettings();
+}
+
+// ページ読み込み時（main関数や初期化処理）に実行
+function applySavedTheme() {
+  const savedTheme = settings.theme || 'default';
+  document.getElementById('themeSelect').value = savedTheme;
+  changeTheme(savedTheme);
+}
 
 /**
  * 汎用ドロップエリア初期化
