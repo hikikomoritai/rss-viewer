@@ -636,8 +636,15 @@ document.getElementById("exportSettings").onclick = () => {
   const dd = String(now.getDate()).padStart(2, "0");
   const hh = String(now.getHours()).padStart(2, "0");
   const mi = String(now.getMinutes()).padStart(2, "0");
-  const fileName = `rss-settings-${yyyy}${mm}${dd}-${hh}${mi}.json`;
+  const defaultFileName = `rss-settings-${yyyy}${mm}${dd}-${hh}${mi}.json`;
+  const newFileName = prompt("設定ファイルをエクスポートしますか？\nファイル名を入力してください。", defaultFileName);
 
+  if (newFileName === null) {
+    URL.revokeObjectURL(url);
+    return;
+  }
+
+  const fileName = newFileName.trim() === "" ? defaultFileName : newFileName.trim();
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;   // ★ ここに日付入りファイル名をセット
