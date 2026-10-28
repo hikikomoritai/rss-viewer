@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MACアドレス分割入力テストフォーム</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    .mac-input-container {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .mac-field {
+      width: 35px;
+      height: 30px;
+      text-align: center;
+      font-size: 16px;
+      font-family: monospace;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>MACアドレス入力テスト</h2>
+  <p>2文字ずつ入力する分割フォームです：</p>
+
+  <form id="macForm">
+    <div class="mac-input-container">
+      <input type="text" class="mac-field" maxlength="2" id="mac1" autofocus> :
+      <input type="text" class="mac-field" maxlength="2" id="mac2"> :
+      <input type="text" class="mac-field" maxlength="2" id="mac3"> :
+      <input type="text" class="mac-field" maxlength="2" id="mac4"> :
+      <input type="text" class="mac-field" maxlength="2" id="mac5"> :
+      <input type="text" class="mac-field" maxlength="2" id="mac6">
+    </div>
+  </form>
+
+  <script>
+    // 2文字入力されたら自動的に次の入力欄へフォーカス移動する処理
+    const fields = document.querySelectorAll('.mac-field');
+
+    fields.forEach((field, index) => {
+      field.addEventListener('input', (e) => {
+        if (field.value.length >= field.maxLength) {
+          if (index < fields.length - 1) {
+            fields[index + 1].focus();
+          }
+        }
+      });
+
+      // Backspaceキーで前のフィールドに戻る処理
+      field.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && field.value.length === 0) {
+          if (index > 0) {
+            fields[index - 1].focus();
+          }
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
